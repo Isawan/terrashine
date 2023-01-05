@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "terrashine"
+version = "0.1.0"
+description = "Terrashine"
+authors = ["Isawan Millican <git@isawan.net>"]
+readme = "README.md"
+packages = []
+
+[tool.poetry.dependencies]
+python = "^3.9"
+flask = "^2.2.2"
+minio = "^7.1.12"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
