@@ -1,44 +1,51 @@
-use serde::{de, Deserialize, Deserializer, Serialize};
-use std::{collections::HashMap, error::Error, fmt::Display, string::ParseError};
-use url::{form_urlencoded::Parse, Url};
+use http::HeaderMap;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use url::Url;
 
-use axum::Json;
+use axum::extract::{Path, State};
 use hyper::StatusCode;
 
+use crate::app::AppState;
+
 #[derive(Serialize)]
-struct MirrorVersions<'a> {
-    archives: HashMap<&'a str, &'a str>,
+struct MirrorVersions {
+    archives: HashMap<String, MirrorDownloadDetail>,
+}
+
+#[derive(Serialize)]
+struct MirrorDownloadDetail {
+    url: Url,
+    hashes: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize)]
-struct ProviderResponse<'a> {
-    protocols: Vec<&'a str>,
-    os: &'a str,
-    arch: &'a str,
-    filename: &'a str,
+pub struct ProviderResponse {
+    protocols: Vec<String>,
+    os: String,
+    arch: String,
+    filename: String,
     download_url: Url,
     shasums_url: Url,
     shasums_signature_url: Url,
-    shasum: &'a str,
-    signing_keys: ProviderSigningKeys<'a>,
+    shasum: String,
+    signing_keys: ProviderSigningKeys,
 }
 
 #[derive(Deserialize, Debug)]
-struct ProviderSigningKeys<'a> {
-    #[serde(borrow)]
-    gpg_public_keys: ProviderGPGPublicKeys<'a>,
+struct ProviderSigningKeys {
+    gpg_public_keys: ProviderGPGPublicKeys,
 }
 
 #[derive(Deserialize, Debug)]
-struct ProviderGPGPublicKeys<'a> {
-    #[serde(borrow)]
-    keys: Vec<ProviderGPGPublicKey<'a>>,
+struct ProviderGPGPublicKeys {
+    keys: Vec<ProviderGPGPublicKey>,
 }
 
 #[derive(Deserialize, Debug)]
-struct ProviderGPGPublicKey<'a> {
-    key_id: &'a str,
-    ascii_armor: &'a str,
+struct ProviderGPGPublicKey {
+    key_id: String,
+    ascii_armor: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -68,10 +75,24 @@ impl TryFrom<String> for Version {
     }
 }
 
-fn version<'a>(
-    hostname: &str,
-    namespace: &str,
-    provider_type: &str,
-) -> Result<Json<MirrorVersions<'a>>, StatusCode> {
-    todo!()
+fn archive_name(os: &str, arch: &str) -> String {
+    let mut s = String::with_capacity(os.len() + 1 + arch.len());
+    s.push_str(os);
+    s.push('_');
+    s.push_str(arch);
+    s
+}
+
+pub async fn version_handler<'a>(
+    State(AppState {
+        http_client: http, ..
+    }): State<AppState>,
+    Path((hostname, namespace, provider_type, version_json)): Path<(
+        String,
+        String,
+        String,
+        Version,
+    )>,
+) -> Result<(HeaderMap, String), StatusCode> {
+    todo!();
 }

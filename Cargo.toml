@@ -2,6 +2,8 @@
 name = "terrashine"
 version = "0.1.0"
 edition = "2021"
+author = "Isawan Millican"
+about = "Terraform mirroring proxy"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -9,15 +11,24 @@ edition = "2021"
 anyhow = "1.0.69"
 aws-sdk-s3 = "0.24.0"
 axum = {version="0.6.4", features = ["http2", "json"]}
+clap = { version = "4.1.8", features = ["derive"] }
+evmap = "10.0.2"
 http = "0.2.8"
 hyper = {version= "0.14.24", features = ["full"]}
+lazy_static = "1.4.0"
 reqwest = { version = "0.11.14", features = ["rustls-tls-native-roots"] }
 serde = { version = "1.0.152", features = ["serde_derive"] }
 serde_json = "1.0.93"
 thiserror = "1.0.38"
-tokio = {version= "1.25.0", features = ["full"]}
 tower = "0.4.13"
 tower-http = { version = "0.3.5", features = ["tracing", "trace", "metrics"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter", "json", "tracing-log"] }
 url = { version = "2.3.1", features = ["serde"]}
+tokio = {version = "1.26.0", features = ["full"]}
+sqlx = { version = "0.6.2", features = ["runtime-tokio-native-tls", "postgres"]}
+tokio-stream = "0.1.12"
+
+
+[build]
+rustflags = ["--cfg", "tokio_unstable"]

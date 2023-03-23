@@ -1,9 +1,5 @@
-use axum::{
-    extract::{Path, State},
-    routing::get,
-    Router,
-};
-use http::{HeaderMap, StatusCode};
+use axum::{routing::get, Router};
+use sqlx::{Connection, Pool, Postgres};
 use tower_http::{
     trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
     LatencyUnit,
@@ -11,30 +7,32 @@ use tower_http::{
 use tracing::Level;
 
 use crate::index;
-use crate::version::Version;
+use crate::version;
 
 #[derive(Clone)]
-struct AppState {
-    http_client: reqwest::Client,
+pub struct AppState {
+    pub http_client: reqwest::Client,
+    pub db_client: Pool<Postgres>,
 }
 
 impl AppState {
-    fn new() -> AppState {
+    pub fn new(db: Pool<Postgres>, http: reqwest::Client) -> AppState {
         AppState {
-            http_client: reqwest::Client::new(),
+            http_client: http,
+            db_client: db,
         }
     }
 }
 
-pub fn provider_mirror_app() -> Router {
+pub fn provider_mirror_app(state: AppState) -> Router {
     Router::new()
         .route(
             "/:hostname/:namespace/:provider_type/index.json",
-            get(index_handler),
+            get(index::index_handler),
         )
         .route(
             "/:hostname/:namespace/:provider_type/:version",
-            get(version_handler),
+            get(version::version_handler),
         )
         .layer(
             TraceLayer::new_for_http()
@@ -46,24 +44,5 @@ pub fn provider_mirror_app() -> Router {
                         .latency_unit(LatencyUnit::Micros),
                 ),
         )
-        .with_state(AppState::new())
-}
-
-async fn index_handler(
-    State(state): State<AppState>,
-    Path((hostname, namespace, provider_type)): Path<(String, String, String)>,
-) -> Result<(HeaderMap, String), StatusCode> {
-    index::index(state.http_client, &hostname, &namespace, &provider_type).await
-}
-
-async fn version_handler<'a>(
-    State(state): State<AppState>,
-    Path((hostname, namespace, provider_type, version_json)): Path<(
-        String,
-        String,
-        String,
-        Version,
-    )>,
-) -> Result<(HeaderMap, String), StatusCode> {
-    todo!();
+        .with_state(state)
 }
