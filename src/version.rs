@@ -65,6 +65,13 @@ impl Version {
     }
 }
 
+#[derive(Clone, Debug, sqlx::FromRow)]
+struct DownloadTuple {
+    os: String,
+    arch: String,
+    url: Option<String>,
+}
+
 impl TryFrom<String> for Version {
     type Error = VersionParseError;
     fn try_from(value: String) -> Result<Version, VersionParseError> {
@@ -94,5 +101,9 @@ pub async fn version_handler<'a>(
         Version,
     )>,
 ) -> Result<(HeaderMap, String), StatusCode> {
+    todo!();
+}
+
+async fn list_known_downloads() -> Vec<DownloadTuple> {
     todo!();
 }

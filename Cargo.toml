@@ -12,11 +12,11 @@ anyhow = "1.0.69"
 aws-sdk-s3 = "0.24.0"
 axum = {version="0.6.4", features = ["http2", "json"]}
 clap = { version = "4.1.8", features = ["derive"] }
-evmap = "10.0.2"
+moka = { version = "0.10.0", features = ["future"] }
 http = "0.2.8"
 hyper = {version= "0.14.24", features = ["full"]}
 lazy_static = "1.4.0"
-reqwest = { version = "0.11.14", features = ["rustls-tls-native-roots"] }
+reqwest = { version = "0.11.14", features = ["rustls-tls-native-roots", "gzip", "deflate", "brotli"] }
 serde = { version = "1.0.152", features = ["serde_derive"] }
 serde_json = "1.0.93"
 thiserror = "1.0.38"

@@ -12,17 +12,3 @@ struct ProviderResponseKey {
 }
 
 struct Version(u64);
-
-type ProviderVersionsCache =
-    evmap::ReadHandle<ProviderVersionsKey, crate::index::ProviderVersions, Version, DefaultHasher>;
-
-type IndexMirrorCache = evmap::ReadHandle<
-    ProviderResponseKey,
-    crate::version::ProviderResponse,
-    Version,
-    DefaultHasher,
->;
-
-struct Test {
-    source: String,
-}
