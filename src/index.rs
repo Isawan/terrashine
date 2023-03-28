@@ -58,22 +58,32 @@ pub async fn index_handler(
     State(AppState {
         db_client: mut db,
         http_client: http,
-        ..
+        meta_cache: cache,
     }): State<AppState>,
     Path((hostname, namespace, provider_type)): Path<(String, String, String)>,
 ) -> Result<(HeaderMap, String), StatusCode> {
+    if let Some(value) = cache.get(&(hostname.clone(), namespace.clone(), provider_type.clone())) {
+        let mut headers = HeaderMap::new();
+        headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+        return Ok((headers, value));
+    }
+
     match list_provider_versions(&db, &hostname, &namespace, &provider_type).await {
         Ok(Some(mirror_index)) => {
             let mut headers = HeaderMap::new();
             headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-            return Ok((headers, serde_json::to_string(&mirror_index).unwrap()));
+            let value = serde_json::to_string(&mirror_index).unwrap();
+            cache
+                .insert((hostname, namespace, provider_type), value.clone())
+                .await;
+            return Ok((headers, value));
         }
         Ok(None) => {
             tracing::info!("Unknown provider found, fetching upstream");
         }
         Err(error) => {
             tracing::warn!(
-                ?error,
+                reason = ?error,
                 "Error occured fetching provider from database, fetching upstream"
             );
         }
@@ -115,12 +125,19 @@ pub async fn index_handler(
     )
     .await;
     if let Result::Err(error) = result {
-        tracing::error!(%error, "Could not store terraform provider metadata to database");
+        tracing::warn!(%error, "Could not store terraform provider metadata to database");
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
     let mirror_index = MirrorIndex::from(provider_versions);
-    let response_body = serde_json::to_string(&mirror_index).expect("Failed to serialize");
+    let response_body = match serde_json::to_string(&mirror_index) {
+        Ok(body) => body,
+        Err(error) => {
+            tracing::warn!(reason = ?error, "Failed to serialize");
+            return Err(StatusCode::BAD_GATEWAY);
+        }
+    };
+
     let mut headers = HeaderMap::new();
     headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
 

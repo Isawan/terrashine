@@ -1,6 +1,9 @@
 use http::HeaderMap;
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use sqlx::{PgPool, Pool};
 use std::collections::HashMap;
+use tokio_stream::{self as stream, StreamExt};
 use url::Url;
 
 use axum::extract::{Path, State};
@@ -104,6 +107,74 @@ pub async fn version_handler<'a>(
     todo!();
 }
 
-async fn list_known_downloads() -> Vec<DownloadTuple> {
-    todo!();
+type Checksum = [u8; 32];
+
+struct DatabaseDownloadResult {
+    os: String,
+    arch: String,
+    sha256sum: Option<Checksum>,
+}
+
+async fn list_downloads(
+    http: &Client,
+    db: &PgPool,
+    hostname: &str,
+    namespace: &str,
+    provider_type: &str,
+    version: &str,
+) -> Result<Vec<DatabaseDownloadResult>, anyhow::Error> {
+    let query = sqlx::query!(
+        r#"
+        select "os", "arch", "sha256sum"
+        from "terraform_provider_version", "terraform_provider"
+        where
+            "terraform_provider_version"."provider_id" = "terraform_provider"."id"
+            and "terraform_provider_version"."version" = $1
+            and "terraform_provider"."hostname" = $2
+            and "terraform_provider"."namespace" = $3
+            and "terraform_provider"."type" = $4;
+        "#,
+        version,
+        hostname,
+        namespace,
+        provider_type,
+    );
+    let mut rows = query.fetch(db);
+    let mut result = vec![];
+    while let Some(row) = rows.try_next().await? {
+        if let Some(x) = row.sha256sum {
+            let mut buffer = [0u8; 32];
+
+            // Enforced by database schema, these error cases should never occur
+            if (x.len() != 64) {
+                tracing::error!(
+                    expected = 64,
+                    found = x.len(),
+                    hash = x,
+                    "sha256 hexadecimal hash expected, incorrect length."
+                );
+                panic!();
+            }
+            if let Err(error) = hex::decode_to_slice(&x, &mut buffer) {
+                tracing::error!(
+                    reason = ?error,
+                    "sha256 hexadecimal hash expected, could not parse."
+                );
+                panic!();
+            }
+
+            result.push(DatabaseDownloadResult {
+                os: row.os,
+                arch: row.arch,
+                sha256sum: Some(buffer),
+            });
+        } else {
+            result.push(DatabaseDownloadResult {
+                os: row.os,
+                arch: row.arch,
+                sha256sum: None,
+            });
+        }
+    }
+    Ok(result)
 }

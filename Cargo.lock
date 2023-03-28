@@ -2431,6 +2431,7 @@ dependencies = [
  "aws-sdk-s3",
  "axum",
  "clap",
+ "hex",
  "http",
  "hyper",
  "lazy_static",

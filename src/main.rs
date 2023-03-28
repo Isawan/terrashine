@@ -82,7 +82,6 @@ async fn main() -> () {
     let http_builder = Client::builder()
         .connect_timeout(Duration::from_secs(10))
         .timeout(Duration::from_secs(60));
-
     let http = match http_builder.build() {
         Ok(client) => client,
         Err(error) => {
@@ -94,6 +93,7 @@ async fn main() -> () {
     let cache = Cache::builder()
         .initial_capacity(args.cache_entry_max_count)
         .max_capacity(args.cache_entry_max_count as u64)
+        .time_to_idle(Duration::from_secs(60))
         .build();
 
     // build application
