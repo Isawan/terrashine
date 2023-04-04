@@ -1,32 +1,41 @@
+use axum::response::IntoResponse;
 use http::{header::CONTENT_TYPE, HeaderValue};
-use moka::future::Cache;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use std::collections::HashMap;
 use std::fmt::Debug;
-use std::time::{Duration, Instant};
-use std::{collections::HashMap, fmt::Display, hash::Hash, mem};
-use tokio::time::sleep;
-use tokio_stream::{self as stream, StreamExt};
-use tracing::{info, span, Level};
+use tokio_stream::StreamExt;
 use url::ParseError;
 
 use axum::{
     extract::{Path, State},
     response::Response,
-    Json,
 };
-use hyper::{header::HeaderName, HeaderMap, StatusCode};
+use hyper::{HeaderMap, StatusCode};
 
 use crate::app::AppState;
 
-const MAX_INDEX_RESPONSE: u64 = 4_000_000;
-
 #[derive(Serialize, Debug)]
-struct MirrorIndex {
+pub struct MirrorIndex {
     // TODO: the nested hash value is always empty, we should implement
     // custom serialize to avoid unneeded work.
     versions: HashMap<String, HashMap<String, String>>,
+}
+
+impl IntoResponse for MirrorIndex {
+    fn into_response(self) -> Response {
+        let mut headers = HeaderMap::new();
+        headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+        let response = match serde_json::to_string(&self) {
+            Ok(r) => r,
+            Err(e) => {
+                tracing::error!(reason = ?e, "Could not serialize MirrorIndex");
+                panic!();
+            }
+        };
+        return (headers, response).into_response();
+    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -61,25 +70,13 @@ pub async fn index_handler(
         meta_cache: cache,
     }): State<AppState>,
     Path((hostname, namespace, provider_type)): Path<(String, String, String)>,
-) -> Result<(HeaderMap, String), StatusCode> {
-    if let Some(value) = cache.get(&(hostname.clone(), namespace.clone(), provider_type.clone())) {
-        let mut headers = HeaderMap::new();
-        headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-        return Ok((headers, value));
-    }
-
+) -> Result<MirrorIndex, StatusCode> {
     match list_provider_versions(&db, &hostname, &namespace, &provider_type).await {
         Ok(Some(mirror_index)) => {
-            let mut headers = HeaderMap::new();
-            headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-            let value = serde_json::to_string(&mirror_index).unwrap();
-            cache
-                .insert((hostname, namespace, provider_type), value.clone())
-                .await;
-            return Ok((headers, value));
+            return Ok(mirror_index);
         }
         Ok(None) => {
-            tracing::info!("Unknown provider found, fetching upstream");
+            tracing::debug!("Unknown provider requested, fetching upstream");
         }
         Err(error) => {
             tracing::warn!(
@@ -130,18 +127,7 @@ pub async fn index_handler(
     }
 
     let mirror_index = MirrorIndex::from(provider_versions);
-    let response_body = match serde_json::to_string(&mirror_index) {
-        Ok(body) => body,
-        Err(error) => {
-            tracing::warn!(reason = ?error, "Failed to serialize");
-            return Err(StatusCode::BAD_GATEWAY);
-        }
-    };
-
-    let mut headers = HeaderMap::new();
-    headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-
-    Result::Ok((headers, response_body))
+    Result::Ok(mirror_index)
 }
 
 fn build_url(hostname: &str, namespace: &str, provider_type: &str) -> Result<Url, ParseError> {

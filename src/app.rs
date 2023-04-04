@@ -9,8 +9,9 @@ use tower_http::{
 };
 use tracing::Level;
 
-use crate::index;
 use crate::version;
+use crate::{index};
+use crate::artifacts;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -43,6 +44,7 @@ pub fn provider_mirror_app(state: AppState) -> Router {
             "/:hostname/:namespace/:provider_type/:version",
             get(version::version_handler),
         )
+        .route("/artifacts/:version_id", get(artifacts::artifacts_handler))
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::new().level(Level::INFO))

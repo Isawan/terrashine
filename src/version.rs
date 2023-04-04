@@ -1,12 +1,15 @@
-use http::HeaderMap;
+use http::{header::CONTENT_TYPE, HeaderMap, HeaderValue};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Pool};
+use sqlx::{database, PgPool, Pool};
 use std::collections::HashMap;
 use tokio_stream::{self as stream, StreamExt};
 use url::Url;
 
-use axum::extract::{Path, State};
+use axum::{
+    extract::{Path, State},
+    response::{IntoResponse, Response},
+};
 use hyper::StatusCode;
 
 use crate::app::AppState;
@@ -51,6 +54,16 @@ struct ProviderGPGPublicKey {
     ascii_armor: String,
 }
 
+#[derive(Deserialize, Serialize, Debug)]
+pub struct MirrorVersion {
+    archives: HashMap<String, TargetPlatformIdentifier>,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+struct TargetPlatformIdentifier {
+    url: String,
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(try_from = "String")]
 pub struct Version {
@@ -66,13 +79,6 @@ impl Version {
         // This is safe as we verified this when creating the type.
         self.full.strip_suffix(".json").unwrap()
     }
-}
-
-#[derive(Clone, Debug, sqlx::FromRow)]
-struct DownloadTuple {
-    os: String,
-    arch: String,
-    url: Option<String>,
 }
 
 impl TryFrom<String> for Version {
@@ -93,18 +99,37 @@ fn archive_name(os: &str, arch: &str) -> String {
     s
 }
 
+fn build_url(id: i64) -> String {
+    let mut s = String::with_capacity(20);
+    s.push_str("artifacts/");
+    s.push_str(&id.to_string());
+    s
+}
+
 pub async fn version_handler<'a>(
     State(AppState {
-        http_client: http, ..
+        http_client: http,
+        db_client: db,
+        ..
     }): State<AppState>,
-    Path((hostname, namespace, provider_type, version_json)): Path<(
-        String,
-        String,
-        String,
-        Version,
-    )>,
-) -> Result<(HeaderMap, String), StatusCode> {
-    todo!();
+    Path((hostname, namespace, provider_type, version)): Path<(String, String, String, Version)>,
+) -> Result<MirrorVersion, StatusCode> {
+    let downloads_result = list_downloads(
+        &db,
+        &hostname,
+        &namespace,
+        &provider_type,
+        &version.prefix(),
+    )
+    .await;
+    let downloads = match downloads_result {
+        Ok(d) => d,
+        Err(e) => {
+            tracing::error!(reason=?e,"Error occured querying database");
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
+    Ok(downloads.into())
 }
 
 type Checksum = [u8; 32];
@@ -112,20 +137,47 @@ type Checksum = [u8; 32];
 struct DatabaseDownloadResult {
     os: String,
     arch: String,
-    sha256sum: Option<Checksum>,
+    id: i64,
+}
+
+impl From<Vec<DatabaseDownloadResult>> for MirrorVersion {
+    fn from(value: Vec<DatabaseDownloadResult>) -> Self {
+        let mut archives = HashMap::new();
+        for DatabaseDownloadResult { os, arch, id } in value.iter() {
+            let target = archive_name(os, arch);
+            let url = build_url(*id);
+            archives.insert(target, TargetPlatformIdentifier { url });
+        }
+        return MirrorVersion { archives };
+    }
+}
+
+impl IntoResponse for MirrorVersion {
+    fn into_response(self) -> Response {
+        let mut headers = HeaderMap::new();
+        headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+        let response = match serde_json::to_string(&self) {
+            Ok(r) => r,
+            Err(e) => {
+                tracing::error!(reason = ?e, "Could not serialize VersionIndex");
+                return (headers, StatusCode::INTERNAL_SERVER_ERROR).into_response();
+            }
+        };
+        return (headers, response).into_response();
+    }
 }
 
 async fn list_downloads(
-    http: &Client,
     db: &PgPool,
     hostname: &str,
     namespace: &str,
     provider_type: &str,
     version: &str,
 ) -> Result<Vec<DatabaseDownloadResult>, anyhow::Error> {
+    tracing::trace!(?hostname, ?namespace, ?provider_type, ?version);
     let query = sqlx::query!(
         r#"
-        select "os", "arch", "sha256sum"
+        select "terraform_provider_version"."id", "os", "arch"
         from "terraform_provider_version", "terraform_provider"
         where
             "terraform_provider_version"."provider_id" = "terraform_provider"."id"
@@ -142,39 +194,11 @@ async fn list_downloads(
     let mut rows = query.fetch(db);
     let mut result = vec![];
     while let Some(row) = rows.try_next().await? {
-        if let Some(x) = row.sha256sum {
-            let mut buffer = [0u8; 32];
-
-            // Enforced by database schema, these error cases should never occur
-            if (x.len() != 64) {
-                tracing::error!(
-                    expected = 64,
-                    found = x.len(),
-                    hash = x,
-                    "sha256 hexadecimal hash expected, incorrect length."
-                );
-                panic!();
-            }
-            if let Err(error) = hex::decode_to_slice(&x, &mut buffer) {
-                tracing::error!(
-                    reason = ?error,
-                    "sha256 hexadecimal hash expected, could not parse."
-                );
-                panic!();
-            }
-
-            result.push(DatabaseDownloadResult {
-                os: row.os,
-                arch: row.arch,
-                sha256sum: Some(buffer),
-            });
-        } else {
-            result.push(DatabaseDownloadResult {
-                os: row.os,
-                arch: row.arch,
-                sha256sum: None,
-            });
-        }
+        result.push(DatabaseDownloadResult {
+            id: row.id,
+            os: row.os,
+            arch: row.arch,
+        });
     }
     Ok(result)
 }

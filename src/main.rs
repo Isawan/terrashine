@@ -1,4 +1,5 @@
 mod app;
+mod artifacts;
 mod cache;
 mod index;
 mod version;
@@ -51,6 +52,9 @@ struct Args {
     /// Maximum number of entries for in-memory cache
     #[arg(long, default_value_t = 64_000)]
     cache_entry_max_count: usize,
+
+    #[arg(long, default_value = "terrashine")]
+    bucket_name: String,
 }
 
 #[tokio::main]
@@ -102,6 +106,8 @@ async fn main() -> () {
     // run it with hyper on localhost:3000
     let server = axum::Server::bind(&args.listen).serve(app.into_make_service());
     tracing::info!("Started server");
-    server.await.unwrap();
+    if let Err(error) = server.await {
+        tracing::error!(reason=?error, "HTTP service failed");
+    }
     tracing::info!("Terminating server");
 }
