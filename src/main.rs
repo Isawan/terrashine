@@ -1,6 +1,7 @@
 mod app;
 mod artifacts;
 mod cache;
+mod error;
 mod index;
 mod version;
 mod writer;
@@ -13,6 +14,7 @@ use std::{
 };
 
 use app::AppState;
+use aws_config::meta::region::RegionProviderChain;
 use clap::Parser;
 use lazy_static::lazy_static;
 use moka::future::{Cache, CacheBuilder};
@@ -66,6 +68,10 @@ async fn main() -> () {
         //.json()
         .init();
 
+    let region_provider = RegionProviderChain::default_provider().or_else("us-east-1");
+    let config = aws_config::from_env().region(region_provider).load().await;
+    let s3 = aws_sdk_s3::Client::new(&config);
+
     let mut db_options =
         PgConnectOptions::from_str(&args.database_url).expect("Could not parse database URL");
     db_options.log_statements(LevelFilter::Debug);
@@ -101,7 +107,7 @@ async fn main() -> () {
         .build();
 
     // build application
-    let app = app::provider_mirror_app(AppState::new(db, http, cache));
+    let app = app::provider_mirror_app(AppState::new(s3, db, http, cache));
 
     // run it with hyper on localhost:3000
     let server = axum::Server::bind(&args.listen).serve(app.into_make_service());

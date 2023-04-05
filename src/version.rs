@@ -132,8 +132,6 @@ pub async fn version_handler<'a>(
     Ok(downloads.into())
 }
 
-type Checksum = [u8; 32];
-
 struct DatabaseDownloadResult {
     os: String,
     arch: String,

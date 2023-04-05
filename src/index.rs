@@ -67,7 +67,7 @@ pub async fn index_handler(
     State(AppState {
         db_client: mut db,
         http_client: http,
-        meta_cache: cache,
+        ..
     }): State<AppState>,
     Path((hostname, namespace, provider_type)): Path<(String, String, String)>,
 ) -> Result<MirrorIndex, StatusCode> {
@@ -226,7 +226,7 @@ async fn store_provider_versions(
         VersionTuple,
         r#"
         insert into "terraform_provider_version"
-            ("version", "os", "arch", "provider_id", "upstream_package_url", "sha256sum" )
+            ("version", "os", "arch", "provider_id", "upstream_package_url", "artifact_id" )
             select "t1".*, "t2"."id", null, null from
                 (select * from unnest($1::text[], $2::text[], $3::text[])) as t1,
                 (select "id" from "terraform_provider"

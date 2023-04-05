@@ -9,8 +9,8 @@ about = "Terraform mirroring proxy"
 
 [dependencies]
 anyhow = "1.0.69"
-aws-sdk-s3 = "0.24.0"
-axum = {version="0.6.4", features = ["http2", "json"]}
+aws-sdk-s3 = {version="0.25.0"}
+axum = { version="0.6.4", features = ["http2", "json"]}
 clap = { version = "4.1.8", features = ["derive"] }
 moka = { version = "0.10.0", features = ["future"] }
 http = "0.2.8"
@@ -30,6 +30,8 @@ sqlx = { version = "0.6.2", features = ["runtime-tokio-native-tls", "postgres"]}
 tokio-stream = "0.1.12"
 hex = "0.4.3"
 testcontainers = "0.14.0"
+aws-config = { version = "0.55.0", features = ["native-tls"] }
+aws-endpoint = "0.55.0"
 
 
 [build]
