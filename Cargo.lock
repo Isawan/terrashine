@@ -2679,6 +2679,7 @@ dependencies = [
  "aws-sdk-s3",
  "axum",
  "clap",
+ "futures",
  "hex",
  "http",
  "hyper",

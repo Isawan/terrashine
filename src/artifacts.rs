@@ -9,14 +9,17 @@ use axum::{
     body::Bytes,
     extract::{Path, State},
 };
+use futures::future::TryFutureExt;
 
 use http::StatusCode;
 use reqwest::{Client, Url};
 use sqlx::{query_as, PgPool};
+use tokio::try_join;
 use tokio_stream::{Stream, StreamExt};
+use tower_http::classify::StatusInRangeAsFailures;
 use url::ParseError;
 
-use crate::{app::AppState};
+use crate::app::AppState;
 
 const PREALLOCATED_BUFFER_BYTES: usize = 12_582_912;
 const S3_MINIMUM_UPLOAD_CHUNK_BYTES: usize = 12_582_912;
@@ -25,11 +28,12 @@ pub async fn artifacts_handler<'a>(
     State(AppState {
         http_client: http,
         db_client: db,
+        s3_client: s3,
         ..
     }): State<AppState>,
     Path((version_id)): Path<(i64)>,
 ) -> Result<Bytes, StatusCode> {
-    let artifact = match get_artifact_from_database(db, version_id).await {
+    let artifact_detail = match get_artifact_from_database(&db, version_id).await {
         Ok(Some(x)) => x,
         Ok(None) => {
             tracing::debug!(?version_id, "Version id requested not found in database");
@@ -38,6 +42,43 @@ pub async fn artifacts_handler<'a>(
         Err(e) => {
             tracing::error!(reason=?e, ?version_id, "Error querying database for artifact details");
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
+    let artifact = match artifact_detail.artifact_id {
+        Some(id) => Artifact {
+            hostname: artifact_detail.hostname,
+            namespace: artifact_detail.namespace,
+            provider_type: artifact_detail.provider_type,
+            version: artifact_detail.version,
+            os: artifact_detail.os,
+            arch: artifact_detail.arch,
+            artifact_id: id,
+        },
+        None => {
+            // Make upstream request and stash if artifact not stored.
+            let upstream_response = get_upstream(http, &artifact_detail).map_err(|e| {
+                tracing::error!(reason = ?e, "Error occured fetching artifact upstream");
+                StatusCode::BAD_GATEWAY
+            });
+            let response_id = allocate_artifact_id(&db).map_err(|e| {
+                tracing::error!(reason = ?e, "Error occured allocating artifact id from database");
+                StatusCode::INTERNAL_SERVER_ERROR
+            });
+            let (id, body) = try_join!(response_id, upstream_response)?;
+            let artifact = Artifact {
+                hostname: artifact_detail.hostname,
+                namespace: artifact_detail.namespace,
+                provider_type: artifact_detail.provider_type,
+                version: artifact_detail.version,
+                os: artifact_detail.os,
+                arch: artifact_detail.arch,
+                artifact_id: id,
+            };
+            stash_artifact(s3, &artifact, body).await.map_err(|e| {
+                tracing::error!(reason = ?e, "Error occured stashing artifact");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
+            artifact
         }
     };
     todo!();
@@ -65,7 +106,7 @@ struct Artifact {
 }
 
 async fn get_artifact_from_database(
-    db: PgPool,
+    db: &PgPool,
     version_id: i64,
 ) -> Result<Option<ArtifactDetails>, anyhow::Error> {
     let result = query_as!(
@@ -86,14 +127,14 @@ async fn get_artifact_from_database(
         "#,
         version_id
     )
-    .fetch_optional(&db)
+    .fetch_optional(db)
     .await?;
     return Ok(result);
 }
 
 async fn get_upstream(
     http: Client,
-    artifact: ArtifactDetails,
+    artifact: &ArtifactDetails,
 ) -> Result<Pin<Box<impl Stream<Item = reqwest::Result<Bytes>>>>, anyhow::Error> {
     let url = build_url(artifact)?;
     let response = http.get(url).send().await?;
@@ -102,9 +143,21 @@ async fn get_upstream(
     return Ok(Box::pin(stream));
 }
 
+async fn allocate_artifact_id(db: &PgPool) -> Result<i64, anyhow::Error> {
+    sqlx::query!(
+        r#"
+            select nextval('artifact_ids') as "id!";
+        "#
+    )
+    .fetch_one(db)
+    .await
+    .map(|x| x.id)
+    .context("Failure allocating next id")
+}
+
 async fn stash_artifact(
     s3: aws_sdk_s3::Client,
-    artifact: Artifact,
+    artifact: &Artifact,
     mut stream: Pin<Box<impl Stream<Item = reqwest::Result<Bytes>>>>,
 ) -> Result<(), anyhow::Error> {
     let mut key = String::from("artifacts/");
@@ -150,7 +203,7 @@ async fn stash_artifact(
                 // prepare for next round
                 part_number += 1;
                 // We have to allocate a new vec here because upload_part() builder takes
-                // ownership of the old vector.
+                // ownership of the old vector to create a ByteStream.
                 upload_buffer = Vec::with_capacity(PREALLOCATED_BUFFER_BYTES);
             }
             Some(Err(e)) => {
@@ -207,7 +260,7 @@ async fn stash_artifact(
     todo!();
 }
 
-fn build_url(artifact: ArtifactDetails) -> Result<Url, ParseError> {
+fn build_url(artifact: &ArtifactDetails) -> Result<Url, ParseError> {
     let mut url_builder = String::new();
     url_builder.push_str("https://");
     url_builder.push_str(&artifact.hostname);
