@@ -2,7 +2,7 @@ use std::{pin::Pin, time::Duration};
 
 use anyhow::Context;
 use aws_sdk_s3::{
-    presigning::{PresignedRequest, PresigningConfig},
+    presigning::PresigningConfig,
     primitives::ByteStream,
     types::{CompletedMultipartUpload, CompletedPart},
 };
@@ -19,7 +19,6 @@ use serde::Deserialize;
 use sqlx::{query_as, PgPool};
 use tokio::try_join;
 use tokio_stream::Stream;
-use tower_http::classify::StatusInRangeAsFailures;
 use url::ParseError;
 
 use crate::app::AppState;
@@ -27,6 +26,7 @@ use crate::app::AppState;
 const PREALLOCATED_BUFFER_BYTES: usize = 12_582_912;
 const S3_MINIMUM_UPLOAD_CHUNK_BYTES: usize = 12_582_912;
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct ProviderResponse {
     protocols: Vec<String>,
@@ -40,11 +40,13 @@ pub struct ProviderResponse {
     signing_keys: ProviderSigningKeys,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 struct ProviderSigningKeys {
     gpg_public_keys: Vec<ProviderGPGPublicKey>,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 struct ProviderGPGPublicKey {
     key_id: String,
@@ -58,8 +60,9 @@ pub async fn artifacts_handler<'a>(
         s3_client: s3,
         ..
     }): State<AppState>,
-    Path((version_id)): Path<(i64)>,
+    Path(version_id): Path<i64>,
 ) -> Result<Redirect, StatusCode> {
+    tracing::debug!("Get artifact details from database");
     let artifact_detail = match get_artifact_from_database(&db, version_id).await {
         Ok(Some(x)) => x,
         Ok(None) => {
@@ -72,17 +75,22 @@ pub async fn artifacts_handler<'a>(
         }
     };
     let artifact = match artifact_detail.artifact_id {
-        Some(id) => Artifact {
-            hostname: artifact_detail.hostname,
-            namespace: artifact_detail.namespace,
-            provider_type: artifact_detail.provider_type,
-            version: artifact_detail.version,
-            os: artifact_detail.os,
-            arch: artifact_detail.arch,
-            artifact_id: id,
-        },
+        Some(id) => {
+            tracing::debug!("Artifact already downloaded");
+            Artifact {
+                version_id: artifact_detail.version_id,
+                hostname: artifact_detail.hostname,
+                namespace: artifact_detail.namespace,
+                provider_type: artifact_detail.provider_type,
+                version: artifact_detail.version,
+                os: artifact_detail.os,
+                arch: artifact_detail.arch,
+                artifact_id: id,
+            }
+        }
         None => {
             // Make upstream request and stash if artifact not stored.
+            tracing::debug!("Fetching artifact from upstream");
             let upstream_response = get_upstream(http, &artifact_detail).map_err(|e| {
                 tracing::error!(reason = ?e, "Error occured fetching artifact upstream");
                 StatusCode::BAD_GATEWAY
@@ -93,6 +101,7 @@ pub async fn artifacts_handler<'a>(
             });
             let (id, body) = try_join!(response_id, upstream_response)?;
             let artifact = Artifact {
+                version_id: artifact_detail.version_id,
                 hostname: artifact_detail.hostname,
                 namespace: artifact_detail.namespace,
                 provider_type: artifact_detail.provider_type,
@@ -101,10 +110,12 @@ pub async fn artifacts_handler<'a>(
                 arch: artifact_detail.arch,
                 artifact_id: id,
             };
-            stash_artifact(&s3, &artifact, body).await.map_err(|e| {
-                tracing::error!(reason = ?e, "Error occured stashing artifact");
-                StatusCode::INTERNAL_SERVER_ERROR
-            })?;
+            stash_artifact(&db, &s3, &artifact, body)
+                .await
+                .map_err(|e| {
+                    tracing::error!(reason = ?e, "Error occured stashing artifact");
+                    StatusCode::INTERNAL_SERVER_ERROR
+                })?;
             artifact
         }
     };
@@ -117,6 +128,7 @@ pub async fn artifacts_handler<'a>(
 
 #[derive(sqlx::FromRow)]
 struct ArtifactDetails {
+    version_id: i64,
     hostname: String,
     namespace: String,
     #[sqlx(rename = "type")]
@@ -126,7 +138,10 @@ struct ArtifactDetails {
     arch: String,
     artifact_id: Option<i64>,
 }
+
+#[allow(dead_code)]
 struct Artifact {
+    version_id: i64,
     hostname: String,
     namespace: String,
     provider_type: String,
@@ -152,6 +167,7 @@ async fn get_artifact_from_database(
         ArtifactDetails,
         r#"
         select
+            "terraform_provider_version"."id" as "version_id",
             "hostname",
             "namespace",
             "type" as "provider_type",
@@ -207,6 +223,7 @@ async fn allocate_artifact_id(db: &PgPool) -> Result<i64, anyhow::Error> {
 }
 
 async fn stash_artifact(
+    db: &PgPool,
     s3: &aws_sdk_s3::Client,
     artifact: &Artifact,
     mut stream: Pin<Box<impl Stream<Item = reqwest::Result<Bytes>>>>,
@@ -304,6 +321,29 @@ async fn stash_artifact(
         .upload_id(upload_id)
         .send()
         .await?;
+
+    store_artifact_id_in_database(db, artifact).await?;
+
+    Ok(())
+}
+
+async fn store_artifact_id_in_database(
+    db: &PgPool,
+    artifact: &Artifact,
+) -> Result<(), anyhow::Error> {
+    sqlx::query!(
+        r#"
+            update "terraform_provider_version"
+            set "artifact_id" = $1,
+                "artifact_timestamp" = now()
+                where "id" = $2;
+        "#,
+        artifact.artifact_id,
+        artifact.version_id,
+    )
+    .execute(db)
+    .await
+    .with_context(|| format!("Writing artifact id({}) to database", artifact.artifact_id))?;
     Ok(())
 }
 

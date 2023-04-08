@@ -226,8 +226,8 @@ async fn store_provider_versions(
         VersionTuple,
         r#"
         insert into "terraform_provider_version"
-            ("version", "os", "arch", "provider_id", "upstream_package_url", "artifact_id" )
-            select "t1".*, "t2"."id", null, null from
+            ("version", "os", "arch", "provider_id", "artifact_id")
+            select "t1".*, "t2"."id", null from
                 (select * from unnest($1::text[], $2::text[], $3::text[])) as t1,
                 (select "id" from "terraform_provider"
                     where "hostname" = $4

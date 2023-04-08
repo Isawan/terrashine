@@ -17,6 +17,7 @@ use app::AppState;
 use aws_config::meta::region::RegionProviderChain;
 use aws_sdk_s3::primitives::ByteStream;
 use clap::Parser;
+use http::Uri;
 use lazy_static::lazy_static;
 use moka::future::{Cache, CacheBuilder};
 use reqwest::{Client, ClientBuilder};
@@ -47,8 +48,8 @@ struct Args {
     #[arg(long, default_value_t = 5)]
     database_pool: u32,
 
-    /// Minimum TTL on database cache before getting newer versions (seconds)
-    /// TODO: minimum TTL cache
+    /// Minimum TTL on database cache before getting newer versions (seconds).
+    /// NOT IMPLEMENTED
     #[arg(long, default_value_t = 300)]
     database_ttl_minimum: usize,
 
@@ -56,8 +57,13 @@ struct Args {
     #[arg(long, default_value_t = 64_000)]
     cache_entry_max_count: usize,
 
-    #[arg(long, default_value = "terrashine")]
-    bucket_name: String,
+    /// S3 Bucket name to archive to
+    #[arg(long)]
+    s3_bucket_name: String,
+
+    /// Custom S3 Endpoint
+    #[arg(long)]
+    s3_endpoint: Option<Uri>,
 }
 
 #[tokio::main]
@@ -70,11 +76,11 @@ async fn main() -> () {
         .init();
 
     let config = aws_config::from_env().load().await;
-    let mut s3_config = aws_sdk_s3::config::Builder::from(&config)
-        .endpoint_url("http://localhost:9000/")
-        .force_path_style(true) // required for minio to work
-        .build();
-    let s3 = aws_sdk_s3::Client::from_conf(s3_config);
+    let mut s3_config = aws_sdk_s3::config::Builder::from(&config).force_path_style(true); // path style required for minio to work
+    if let Some(endpoint) = args.s3_endpoint {
+        s3_config = s3_config.endpoint_url(endpoint.to_string());
+    }
+    let s3 = aws_sdk_s3::Client::from_conf(s3_config.build());
 
     let mut db_options =
         PgConnectOptions::from_str(&args.database_url).expect("Could not parse database URL");

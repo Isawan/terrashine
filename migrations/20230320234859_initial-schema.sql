@@ -17,15 +17,14 @@ create table if not exists "terraform_provider_version" (
     "os" text not null check (char_length("os") <= 255),
     "arch" text not null check (char_length("arch") <= 255),
 
-    "upstream_package_url" text check (char_length("upstream_package_url") <= 4096),
     "artifact_id" bigint,
     "artifact_timestamp" timestamp with time zone,
 
     constraint "version_tuple" unique ("provider_id","version", "os", "arch"),
     constraint "unique_artifact_id" unique ("artifact_id"),
     constraint "consistent_upload_details" check (
-        ("upstream_package_url" is null and "artifact_id" is null and "artifact_timestamp" is null)
+        ("artifact_id" is null and "artifact_timestamp" is null)
         or
-        ("upstream_package_url" is not null and "artifact_id" is not null and "artifact_timestamp" is not null))
+        ("artifact_id" is not null and "artifact_timestamp" is not null))
 );
 
