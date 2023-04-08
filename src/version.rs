@@ -25,34 +25,6 @@ struct MirrorDownloadDetail {
     hashes: Option<Vec<String>>,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct ProviderResponse {
-    protocols: Vec<String>,
-    os: String,
-    arch: String,
-    filename: String,
-    download_url: Url,
-    shasums_url: Url,
-    shasums_signature_url: Url,
-    shasum: String,
-    signing_keys: ProviderSigningKeys,
-}
-
-#[derive(Deserialize, Debug)]
-struct ProviderSigningKeys {
-    gpg_public_keys: ProviderGPGPublicKeys,
-}
-
-#[derive(Deserialize, Debug)]
-struct ProviderGPGPublicKeys {
-    keys: Vec<ProviderGPGPublicKey>,
-}
-
-#[derive(Deserialize, Debug)]
-struct ProviderGPGPublicKey {
-    key_id: String,
-    ascii_armor: String,
-}
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct MirrorVersion {

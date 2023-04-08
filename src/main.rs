@@ -15,6 +15,7 @@ use std::{
 
 use app::AppState;
 use aws_config::meta::region::RegionProviderChain;
+use aws_sdk_s3::primitives::ByteStream;
 use clap::Parser;
 use lazy_static::lazy_static;
 use moka::future::{Cache, CacheBuilder};
@@ -68,9 +69,12 @@ async fn main() -> () {
         //.json()
         .init();
 
-    let region_provider = RegionProviderChain::default_provider().or_else("us-east-1");
-    let config = aws_config::from_env().region(region_provider).load().await;
-    let s3 = aws_sdk_s3::Client::new(&config);
+    let config = aws_config::from_env().load().await;
+    let mut s3_config = aws_sdk_s3::config::Builder::from(&config)
+        .endpoint_url("http://localhost:9000/")
+        .force_path_style(true) // required for minio to work
+        .build();
+    let s3 = aws_sdk_s3::Client::from_conf(s3_config);
 
     let mut db_options =
         PgConnectOptions::from_str(&args.database_url).expect("Could not parse database URL");

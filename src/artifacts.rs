@@ -1,21 +1,24 @@
-use std::pin::Pin;
+use std::{pin::Pin, time::Duration};
 
 use anyhow::Context;
 use aws_sdk_s3::{
+    presigning::{PresignedRequest, PresigningConfig},
     primitives::ByteStream,
     types::{CompletedMultipartUpload, CompletedPart},
 };
 use axum::{
     body::Bytes,
     extract::{Path, State},
+    response::Redirect,
 };
-use futures::future::TryFutureExt;
+use futures::{future::TryFutureExt, StreamExt};
 
-use http::StatusCode;
+use http::{StatusCode, Uri};
 use reqwest::{Client, Url};
+use serde::Deserialize;
 use sqlx::{query_as, PgPool};
 use tokio::try_join;
-use tokio_stream::{Stream, StreamExt};
+use tokio_stream::Stream;
 use tower_http::classify::StatusInRangeAsFailures;
 use url::ParseError;
 
@@ -23,6 +26,30 @@ use crate::app::AppState;
 
 const PREALLOCATED_BUFFER_BYTES: usize = 12_582_912;
 const S3_MINIMUM_UPLOAD_CHUNK_BYTES: usize = 12_582_912;
+
+#[derive(Debug, Deserialize)]
+pub struct ProviderResponse {
+    protocols: Vec<String>,
+    os: String,
+    arch: String,
+    filename: String,
+    download_url: Url,
+    shasums_url: Url,
+    shasums_signature_url: Url,
+    shasum: String,
+    signing_keys: ProviderSigningKeys,
+}
+
+#[derive(Deserialize, Debug)]
+struct ProviderSigningKeys {
+    gpg_public_keys: Vec<ProviderGPGPublicKey>,
+}
+
+#[derive(Deserialize, Debug)]
+struct ProviderGPGPublicKey {
+    key_id: String,
+    ascii_armor: String,
+}
 
 pub async fn artifacts_handler<'a>(
     State(AppState {
@@ -32,7 +59,7 @@ pub async fn artifacts_handler<'a>(
         ..
     }): State<AppState>,
     Path((version_id)): Path<(i64)>,
-) -> Result<Bytes, StatusCode> {
+) -> Result<Redirect, StatusCode> {
     let artifact_detail = match get_artifact_from_database(&db, version_id).await {
         Ok(Some(x)) => x,
         Ok(None) => {
@@ -74,14 +101,18 @@ pub async fn artifacts_handler<'a>(
                 arch: artifact_detail.arch,
                 artifact_id: id,
             };
-            stash_artifact(s3, &artifact, body).await.map_err(|e| {
+            stash_artifact(&s3, &artifact, body).await.map_err(|e| {
                 tracing::error!(reason = ?e, "Error occured stashing artifact");
                 StatusCode::INTERNAL_SERVER_ERROR
             })?;
             artifact
         }
     };
-    todo!();
+    let req = presign_request(&s3, &artifact).await.map_err(|e| {
+        tracing::error!(reason = ?e, "Error presigning url");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+    Ok(Redirect::to(&req.to_string()))
 }
 
 #[derive(sqlx::FromRow)]
@@ -103,6 +134,14 @@ struct Artifact {
     os: String,
     arch: String,
     artifact_id: i64,
+}
+
+impl Artifact {
+    fn to_s3_key(&self) -> String {
+        let mut key = String::from("artifacts/");
+        key.push_str(&self.artifact_id.to_string());
+        return key;
+    }
 }
 
 async fn get_artifact_from_database(
@@ -136,10 +175,22 @@ async fn get_upstream(
     http: Client,
     artifact: &ArtifactDetails,
 ) -> Result<Pin<Box<impl Stream<Item = reqwest::Result<Bytes>>>>, anyhow::Error> {
-    let url = build_url(artifact)?;
-    let response = http.get(url).send().await?;
-    let success = response.error_for_status()?;
-    let stream = success.bytes_stream();
+    let provider_url = build_url(artifact)?;
+    let provider_response = http
+        .get(provider_url.as_str())
+        .send()
+        .await?
+        .error_for_status()?
+        .bytes()
+        .await?;
+    let provider: ProviderResponse = serde_json::from_slice(&provider_response)
+        .with_context(|| format!("Error parsing upstream body from url: {}", provider_url))?;
+    let stream = http
+        .get(provider.download_url)
+        .send()
+        .await?
+        .error_for_status()?
+        .bytes_stream();
     return Ok(Box::pin(stream));
 }
 
@@ -156,19 +207,17 @@ async fn allocate_artifact_id(db: &PgPool) -> Result<i64, anyhow::Error> {
 }
 
 async fn stash_artifact(
-    s3: aws_sdk_s3::Client,
+    s3: &aws_sdk_s3::Client,
     artifact: &Artifact,
     mut stream: Pin<Box<impl Stream<Item = reqwest::Result<Bytes>>>>,
 ) -> Result<(), anyhow::Error> {
-    let mut key = String::from("artifacts/");
-    key.push_str(&artifact.artifact_id.to_string());
+    let key = artifact.to_s3_key();
 
-    let multipart_upload = s3
-        .create_multipart_upload()
-        .bucket("terrashine")
-        .key(&key)
-        .send()
-        .await?;
+    let req = s3.create_multipart_upload().bucket("terrashine").key(&key);
+
+    tracing::info!(?req);
+
+    let multipart_upload = req.send().await?;
 
     let upload_id = multipart_upload
         .upload_id()
@@ -248,16 +297,28 @@ async fn stash_artifact(
     let completed_upload_request = CompletedMultipartUpload::builder()
         .set_parts(Some(upload_parts))
         .build();
-    let completed_upload_response = s3
-        .complete_multipart_upload()
+    s3.complete_multipart_upload()
         .bucket("terrashine")
         .key(&key)
         .multipart_upload(completed_upload_request)
         .upload_id(upload_id)
         .send()
         .await?;
+    Ok(())
+}
 
-    todo!();
+async fn presign_request(
+    s3: &aws_sdk_s3::Client,
+    artifact: &Artifact,
+) -> Result<Uri, anyhow::Error> {
+    let expires_in = Duration::from_secs(30);
+    let presigned_request = s3
+        .get_object()
+        .bucket("terrashine")
+        .key(artifact.to_s3_key())
+        .presigned(PresigningConfig::expires_in(expires_in)?)
+        .await?;
+    Ok(presigned_request.uri().clone())
 }
 
 fn build_url(artifact: &ArtifactDetails) -> Result<Url, ParseError> {
@@ -270,7 +331,7 @@ fn build_url(artifact: &ArtifactDetails) -> Result<Url, ParseError> {
     url_builder.push_str(&artifact.provider_type);
     url_builder.push_str("/");
     url_builder.push_str(&artifact.version);
-    url_builder.push_str("/download");
+    url_builder.push_str("/download/");
     url_builder.push_str(&artifact.os);
     url_builder.push_str("/");
     url_builder.push_str(&artifact.arch);
