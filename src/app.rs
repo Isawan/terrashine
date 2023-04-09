@@ -16,11 +16,7 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(
-        s3: aws_sdk_s3::Client,
-        db: Pool<Postgres>,
-        http: reqwest::Client,
-    ) -> AppState {
+    pub fn new(s3: aws_sdk_s3::Client, db: Pool<Postgres>, http: reqwest::Client) -> AppState {
         AppState {
             s3_client: s3,
             http_client: http,

@@ -9,11 +9,11 @@ use aws_sdk_s3::{
 use axum::{
     body::Bytes,
     extract::{Path, State},
-    response::Redirect,
+    response::{IntoResponse, Response},
 };
 use futures::{future::TryFutureExt, StreamExt};
 
-use http::{StatusCode, Uri};
+use http::{HeaderValue, StatusCode, Uri};
 use reqwest::{Client, Url};
 use serde::Deserialize;
 use sqlx::{query_as, PgPool};
@@ -53,7 +53,35 @@ struct ProviderGPGPublicKey {
     ascii_armor: String,
 }
 
-pub async fn artifacts_handler<'a>(
+struct ArtifactResponse {
+    uri: HeaderValue,
+}
+
+impl ArtifactResponse {
+    fn new(uri: Uri) -> Self {
+        ArtifactResponse {
+            uri: HeaderValue::try_from(uri.to_string()).expect("URL not a valid header"),
+        }
+    }
+}
+
+impl IntoResponse for ArtifactResponse {
+    fn into_response(self) -> Response {
+        (
+            StatusCode::TEMPORARY_REDIRECT,
+            [
+                (http::header::LOCATION, self.uri),
+                (
+                    http::header::CACHE_CONTROL,
+                    HeaderValue::from_static("public, max-age=10"),
+                ),
+            ],
+        )
+            .into_response()
+    }
+}
+
+pub async fn artifacts_handler(
     State(AppState {
         http_client: http,
         db_client: db,
@@ -61,7 +89,7 @@ pub async fn artifacts_handler<'a>(
         ..
     }): State<AppState>,
     Path(version_id): Path<i64>,
-) -> Result<Redirect, StatusCode> {
+) -> Result<impl IntoResponse, StatusCode> {
     tracing::debug!("Get artifact details from database");
     let artifact_detail = match get_artifact_from_database(&db, version_id).await {
         Ok(Some(x)) => x,
@@ -123,7 +151,8 @@ pub async fn artifacts_handler<'a>(
         tracing::error!(reason = ?e, "Error presigning url");
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
-    Ok(Redirect::temporary(&req.to_string()))
+    let response = ArtifactResponse::new(req);
+    Ok(response)
 }
 
 #[derive(sqlx::FromRow)]
@@ -293,7 +322,7 @@ async fn stash_artifact(
         }
     }
     // Upload anything remaining in the buffer on stream completion
-    if upload_buffer.is_empty() {
+    if !upload_buffer.is_empty() {
         let upload_part = s3
             .upload_part()
             .key(&key)
