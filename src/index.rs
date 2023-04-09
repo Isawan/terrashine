@@ -43,6 +43,7 @@ pub struct ProviderVersions {
     versions: Vec<ProviderVersionItem>,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 struct ProviderVersionItem {
     version: String,
@@ -52,13 +53,6 @@ struct ProviderVersionItem {
 
 #[derive(Deserialize, Debug)]
 struct ProviderPlatform {
-    os: String,
-    arch: String,
-}
-
-#[derive(sqlx::FromRow, Debug)]
-struct VersionTuple {
-    version: String,
     os: String,
     arch: String,
 }
@@ -222,8 +216,7 @@ async fn store_provider_versions(
         );
     };
 
-    let query = sqlx::query_as!(
-        VersionTuple,
+    let query = sqlx::query!(
         r#"
         insert into "terraform_provider_version"
             ("version", "os", "arch", "provider_id", "artifact_id")

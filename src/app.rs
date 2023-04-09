@@ -1,5 +1,4 @@
 use axum::{routing::get, Router};
-use moka::future::Cache;
 use sqlx::{Pool, Postgres};
 use tower_http::{
     trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
@@ -14,7 +13,6 @@ pub struct AppState {
     pub s3_client: aws_sdk_s3::Client,
     pub http_client: reqwest::Client,
     pub db_client: Pool<Postgres>,
-    pub meta_cache: Cache<(String, String, String), String>,
 }
 
 impl AppState {
@@ -22,13 +20,11 @@ impl AppState {
         s3: aws_sdk_s3::Client,
         db: Pool<Postgres>,
         http: reqwest::Client,
-        read_cache: Cache<(String, String, String), String>,
     ) -> AppState {
         AppState {
             s3_client: s3,
             http_client: http,
             db_client: db,
-            meta_cache: read_cache,
         }
     }
 }

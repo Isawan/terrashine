@@ -1,32 +1,27 @@
 mod app;
 mod artifacts;
-mod cache;
 mod error;
 mod index;
 mod version;
-mod writer;
+
 use std::{
     fmt::{Debug, Display},
-    net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr},
+    net::{IpAddr, Ipv6Addr, SocketAddr},
     process::exit,
     str::FromStr,
     time::Duration,
 };
 
 use app::AppState;
-use aws_config::meta::region::RegionProviderChain;
-use aws_sdk_s3::primitives::ByteStream;
 use clap::{Parser, ValueEnum};
 use http::Uri;
 use lazy_static::lazy_static;
-use moka::future::{Cache, CacheBuilder};
-use reqwest::{Client, ClientBuilder};
+use reqwest::Client;
 use sqlx::{
-    pool,
     postgres::{PgConnectOptions, PgPoolOptions},
-    ConnectOptions, Pool,
+    ConnectOptions,
 };
-use tracing::{error, event, log::LevelFilter, Level};
+use tracing::{error, log::LevelFilter};
 use tracing_subscriber::EnvFilter;
 
 lazy_static! {
@@ -60,15 +55,9 @@ struct Args {
     ///
     /// Used for resolving relative URLs for redirects.
     /// In load balancing/reverse proxied setups, this should be the URL of the
-    /// load balancer
+    /// load balancer.
     #[arg(long)]
     http_redirect_url: String,
-
-    ///
-    ///
-    ///
-    #[arg(long, default_value_t = Scheme::HTTP)]
-    http_scheme: Scheme,
 
     /// Database connection URI
     #[arg(long, default_value = "postgres://postgres:password@localhost/")]
@@ -145,16 +134,9 @@ async fn main() -> () {
         }
     };
 
-    let cache = Cache::builder()
-        .initial_capacity(args.cache_entry_max_count)
-        .max_capacity(args.cache_entry_max_count as u64)
-        .time_to_idle(Duration::from_secs(60))
-        .build();
-
     // build application
-    let app = app::provider_mirror_app(AppState::new(s3, db, http, cache));
+    let app = app::provider_mirror_app(AppState::new(s3, db, http));
 
-    // run it with hyper on localhost:3000
     let server = axum::Server::bind(&args.listen).serve(app.into_make_service());
     tracing::info!("Started server");
     if let Err(error) = server.await {

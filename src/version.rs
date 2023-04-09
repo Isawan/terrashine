@@ -1,9 +1,8 @@
 use http::{header::CONTENT_TYPE, HeaderMap, HeaderValue};
-use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use sqlx::{database, PgPool, Pool};
+use sqlx::PgPool;
 use std::collections::HashMap;
-use tokio_stream::{self as stream, StreamExt};
+use tokio_stream::StreamExt;
 use url::Url;
 
 use axum::{
@@ -79,11 +78,7 @@ fn build_url(id: i64) -> String {
 }
 
 pub async fn version_handler<'a>(
-    State(AppState {
-        http_client: http,
-        db_client: db,
-        ..
-    }): State<AppState>,
+    State(AppState { db_client: db, .. }): State<AppState>,
     Path((hostname, namespace, provider_type, version)): Path<(String, String, String, Version)>,
 ) -> Result<MirrorVersion, StatusCode> {
     let downloads_result = list_downloads(
