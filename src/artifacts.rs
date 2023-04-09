@@ -123,7 +123,7 @@ pub async fn artifacts_handler<'a>(
         tracing::error!(reason = ?e, "Error presigning url");
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
-    Ok(Redirect::to(&req.to_string()))
+    Ok(Redirect::temporary(&req.to_string()))
 }
 
 #[derive(sqlx::FromRow)]

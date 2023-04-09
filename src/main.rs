@@ -16,7 +16,7 @@ use std::{
 use app::AppState;
 use aws_config::meta::region::RegionProviderChain;
 use aws_sdk_s3::primitives::ByteStream;
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use http::Uri;
 use lazy_static::lazy_static;
 use moka::future::{Cache, CacheBuilder};
@@ -33,12 +33,42 @@ lazy_static! {
     static ref DEFAULT_SOCKET: SocketAddr = SocketAddr::new(IpAddr::V6(Ipv6Addr::LOCALHOST), 9543);
 }
 
+#[derive(Debug, Clone, ValueEnum)]
+#[value(rename_all = "lowercase")]
+enum Scheme {
+    HTTP,
+    HTTPS,
+}
+
+impl Display for Scheme {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Scheme::HTTP => f.write_str("http"),
+            Scheme::HTTPS => f.write_str("https"),
+        }
+    }
+}
+
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
     /// Socket to listen on
     #[arg(short, long, default_value_t = *DEFAULT_SOCKET)]
     listen: SocketAddr,
+
+    /// URL for redirects
+    ///
+    /// Used for resolving relative URLs for redirects.
+    /// In load balancing/reverse proxied setups, this should be the URL of the
+    /// load balancer
+    #[arg(long)]
+    http_redirect_url: String,
+
+    ///
+    ///
+    ///
+    #[arg(long, default_value_t = Scheme::HTTP)]
+    http_scheme: Scheme,
 
     /// Database connection URI
     #[arg(long, default_value = "postgres://postgres:password@localhost/")]
@@ -49,15 +79,20 @@ struct Args {
     database_pool: u32,
 
     /// Minimum TTL on database cache before getting newer versions (seconds).
+    ///
     /// NOT IMPLEMENTED
     #[arg(long, default_value_t = 300)]
     database_ttl_minimum: usize,
 
     /// Maximum number of entries for in-memory cache
+    ///
+    /// NOT IMPLEMENTED
     #[arg(long, default_value_t = 64_000)]
     cache_entry_max_count: usize,
 
-    /// S3 Bucket name to archive to
+    /// S3 Bucket name
+    ///
+    /// Used to cache upstream artifacts
     #[arg(long)]
     s3_bucket_name: String,
 

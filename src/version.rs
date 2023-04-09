@@ -25,7 +25,6 @@ struct MirrorDownloadDetail {
     hashes: Option<Vec<String>>,
 }
 
-
 #[derive(Deserialize, Serialize, Debug)]
 pub struct MirrorVersion {
     archives: HashMap<String, TargetPlatformIdentifier>,
@@ -73,6 +72,7 @@ fn archive_name(os: &str, arch: &str) -> String {
 
 fn build_url(id: i64) -> String {
     let mut s = String::with_capacity(20);
+    s.push_str("https://localhost:9443/");
     s.push_str("artifacts/");
     s.push_str(&id.to_string());
     s

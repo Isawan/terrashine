@@ -5,3 +5,11 @@ __pycache__
 # Added by cargo
 
 /target
+
+# don't commit certificates to the repository
+*.cert
+*.crt
+*.key
+*.pem
+
+**/.terraform/
