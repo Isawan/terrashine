@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Chapter 1 - terrashine</title>
+        <title>External Caching - terrashine</title>
 
 
         <!-- Custom HTML head -->
@@ -83,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="chapter_1.html" class="active"><strong aria-hidden="true">1.</strong> Chapter 1</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="external-caching.html" class="active"><strong aria-hidden="true">1.</strong> External Caching</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -144,7 +144,10 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="chapter-1"><a class="header" href="#chapter-1">Chapter 1</a></h1>
+                        <h1 id="external-caching"><a class="header" href="#external-caching">External Caching</a></h1>
+<p>Terraform sets <code>Control-Control</code> headers where possible to allow caching by external reverse proxies.
+Currently the /storage/+ endpoint is the only cachable entry without race conditions
+in a highly available setup, so it is the only endpoint to respond with <code>Content-Control</code> headers. The time on these headers is set short enough before the AWS presigned URL expires.</p>
 
                     </main>
 

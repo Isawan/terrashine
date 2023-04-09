@@ -1,3 +1,3 @@
 # Summary
 
-- [Caching](./caching.md)
+- [External Caching](./external-caching.md)
