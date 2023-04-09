@@ -5,7 +5,7 @@ mod index;
 mod version;
 
 use std::{
-    fmt::{Debug, Display},
+    fmt::Debug,
     net::{IpAddr, Ipv6Addr, SocketAddr},
     process::exit,
     str::FromStr,
@@ -13,7 +13,7 @@ use std::{
 };
 
 use app::AppState;
-use clap::{Parser, ValueEnum};
+use clap::Parser;
 use http::Uri;
 use lazy_static::lazy_static;
 use reqwest::Client;
@@ -26,22 +26,6 @@ use tracing_subscriber::EnvFilter;
 
 lazy_static! {
     static ref DEFAULT_SOCKET: SocketAddr = SocketAddr::new(IpAddr::V6(Ipv6Addr::LOCALHOST), 9543);
-}
-
-#[derive(Debug, Clone, ValueEnum)]
-#[value(rename_all = "lowercase")]
-enum Scheme {
-    HTTP,
-    HTTPS,
-}
-
-impl Display for Scheme {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Scheme::HTTP => f.write_str("http"),
-            Scheme::HTTPS => f.write_str("https"),
-        }
-    }
 }
 
 #[derive(Parser, Debug)]
@@ -91,7 +75,7 @@ struct Args {
 }
 
 #[tokio::main]
-async fn main() -> () {
+async fn main() {
     let args = Args::parse();
 
     tracing_subscriber::fmt()

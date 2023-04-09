@@ -81,14 +81,8 @@ pub async fn version_handler<'a>(
     State(AppState { db_client: db, .. }): State<AppState>,
     Path((hostname, namespace, provider_type, version)): Path<(String, String, String, Version)>,
 ) -> Result<MirrorVersion, StatusCode> {
-    let downloads_result = list_downloads(
-        &db,
-        &hostname,
-        &namespace,
-        &provider_type,
-        &version.prefix(),
-    )
-    .await;
+    let downloads_result =
+        list_downloads(&db, &hostname, &namespace, &provider_type, version.prefix()).await;
     let downloads = match downloads_result {
         Ok(d) => d,
         Err(e) => {
@@ -113,7 +107,7 @@ impl From<Vec<DatabaseDownloadResult>> for MirrorVersion {
             let url = build_url(*id);
             archives.insert(target, TargetPlatformIdentifier { url });
         }
-        return MirrorVersion { archives };
+        MirrorVersion { archives }
     }
 }
 
@@ -128,7 +122,7 @@ impl IntoResponse for MirrorVersion {
                 return (headers, StatusCode::INTERNAL_SERVER_ERROR).into_response();
             }
         };
-        return (headers, response).into_response();
+        (headers, response).into_response()
     }
 }
 

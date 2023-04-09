@@ -34,7 +34,7 @@ impl IntoResponse for MirrorIndex {
                 panic!();
             }
         };
-        return (headers, response).into_response();
+        (headers, response).into_response()
     }
 }
 
@@ -130,7 +130,7 @@ fn build_url(hostname: &str, namespace: &str, provider_type: &str) -> Result<Url
     url_builder.push_str(hostname);
     url_builder.push_str("/v1/providers/");
     url_builder.push_str(namespace);
-    url_builder.push_str("/");
+    url_builder.push('/');
     url_builder.push_str(provider_type);
     url_builder.push_str("/versions");
 
@@ -245,7 +245,7 @@ async fn store_provider_versions(
     Ok(count.try_into()?)
 }
 
-impl<'a> From<ProviderVersions> for MirrorIndex {
+impl From<ProviderVersions> for MirrorIndex {
     fn from(provider_versions: ProviderVersions) -> MirrorIndex {
         let mut versions = HashMap::new();
         for version in provider_versions.versions.iter() {

@@ -155,7 +155,7 @@ impl Artifact {
     fn to_s3_key(&self) -> String {
         let mut key = String::from("artifacts/");
         key.push_str(&self.artifact_id.to_string());
-        return key;
+        key
     }
 }
 
@@ -184,7 +184,7 @@ async fn get_artifact_from_database(
     )
     .fetch_optional(db)
     .await?;
-    return Ok(result);
+    Ok(result)
 }
 
 async fn get_upstream(
@@ -207,7 +207,7 @@ async fn get_upstream(
         .await?
         .error_for_status()?
         .bytes_stream();
-    return Ok(Box::pin(stream));
+    Ok(Box::pin(stream))
 }
 
 async fn allocate_artifact_id(db: &PgPool) -> Result<i64, anyhow::Error> {
@@ -293,7 +293,7 @@ async fn stash_artifact(
         }
     }
     // Upload anything remaining in the buffer on stream completion
-    if upload_buffer.len() > 0 {
+    if upload_buffer.is_empty() {
         let upload_part = s3
             .upload_part()
             .key(&key)
@@ -367,13 +367,13 @@ fn build_url(artifact: &ArtifactDetails) -> Result<Url, ParseError> {
     url_builder.push_str(&artifact.hostname);
     url_builder.push_str("/v1/providers/");
     url_builder.push_str(&artifact.namespace);
-    url_builder.push_str("/");
+    url_builder.push('/');
     url_builder.push_str(&artifact.provider_type);
-    url_builder.push_str("/");
+    url_builder.push('/');
     url_builder.push_str(&artifact.version);
     url_builder.push_str("/download/");
     url_builder.push_str(&artifact.os);
-    url_builder.push_str("/");
+    url_builder.push('/');
     url_builder.push_str(&artifact.arch);
 
     Url::parse(&url_builder)
