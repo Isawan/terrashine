@@ -86,6 +86,7 @@ pub async fn artifacts_handler(
         registry_client: registry,
         db_client: db,
         s3_client: s3,
+        args,
         ..
     }): State<AppState>,
     Path(version_id): Path<i64>,
@@ -138,7 +139,7 @@ pub async fn artifacts_handler(
                 arch: artifact_detail.arch,
                 artifact_id: id,
             };
-            stash_artifact(&db, &s3, &artifact, body)
+            stash_artifact(&db, &s3, &args.s3_bucket_name, &artifact, body)
                 .await
                 .map_err(|e| {
                     tracing::error!(reason = ?e, "Error occured stashing artifact");
@@ -147,10 +148,12 @@ pub async fn artifacts_handler(
             artifact
         }
     };
-    let req = presign_request(&s3, &artifact).await.map_err(|e| {
-        tracing::error!(reason = ?e, "Error presigning url");
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let req = presign_request(&s3, &args.s3_bucket_name, &artifact)
+        .await
+        .map_err(|e| {
+            tracing::error!(reason = ?e, "Error presigning url");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
     let response = ArtifactResponse::new(req);
     Ok(response)
 }
@@ -252,11 +255,15 @@ async fn allocate_artifact_id(db: &PgPool) -> Result<i64, anyhow::Error> {
 async fn stash_artifact(
     db: &PgPool,
     s3: &aws_sdk_s3::Client,
+    bucket_name: impl AsRef<str>,
     artifact: &Artifact,
     mut stream: Pin<Box<impl Stream<Item = reqwest::Result<Bytes>>>>,
 ) -> Result<(), anyhow::Error> {
     let key = artifact.to_s3_key();
-    let req = s3.create_multipart_upload().bucket("terrashine").key(&key);
+    let req = s3
+        .create_multipart_upload()
+        .bucket(bucket_name.as_ref())
+        .key(&key);
     let multipart_upload = req.send().await?;
     let upload_id = multipart_upload
         .upload_id()
@@ -276,7 +283,7 @@ async fn stash_artifact(
                 let upload_part = s3
                     .upload_part()
                     .key(&key)
-                    .bucket("terrashine")
+                    .bucket(bucket_name.as_ref())
                     .upload_id(upload_id)
                     .body(ByteStream::from(Bytes::from(upload_buffer)))
                     .part_number(part_number)
@@ -300,7 +307,7 @@ async fn stash_artifact(
                 let abort_response = s3
                     .abort_multipart_upload()
                     .key(&key)
-                    .bucket("terrashine")
+                    .bucket(bucket_name.as_ref())
                     .upload_id(upload_id)
                     .send()
                     .await;
@@ -320,7 +327,7 @@ async fn stash_artifact(
         let upload_part = s3
             .upload_part()
             .key(&key)
-            .bucket("terrashine")
+            .bucket(bucket_name.as_ref())
             .upload_id(upload_id)
             .body(upload_buffer.into())
             .part_number(part_number)
@@ -338,7 +345,7 @@ async fn stash_artifact(
         .set_parts(Some(upload_parts))
         .build();
     s3.complete_multipart_upload()
-        .bucket("terrashine")
+        .bucket(bucket_name.as_ref())
         .key(&key)
         .multipart_upload(completed_upload_request)
         .upload_id(upload_id)
@@ -350,10 +357,7 @@ async fn stash_artifact(
     Ok(())
 }
 
-async fn store_artifact_in_database(
-    db: &PgPool,
-    artifact: &Artifact,
-) -> Result<(), anyhow::Error> {
+async fn store_artifact_in_database(db: &PgPool, artifact: &Artifact) -> Result<(), anyhow::Error> {
     sqlx::query!(
         r#"
             update "terraform_provider_version"
@@ -372,12 +376,13 @@ async fn store_artifact_in_database(
 
 async fn presign_request(
     s3: &aws_sdk_s3::Client,
+    bucket_name: impl AsRef<str>,
     artifact: &Artifact,
 ) -> Result<Uri, anyhow::Error> {
     let expires_in = Duration::from_secs(30);
     let presigned_request = s3
         .get_object()
-        .bucket("terrashine")
+        .bucket(bucket_name.as_ref())
         .key(artifact.to_s3_key())
         .presigned(PresigningConfig::expires_in(expires_in)?)
         .await?;

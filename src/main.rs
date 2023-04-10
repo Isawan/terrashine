@@ -1,8 +1,8 @@
 mod app;
 mod artifacts;
 mod index;
-mod version;
 mod registry_client;
+mod version;
 
 use std::{
     fmt::Debug,
@@ -14,7 +14,6 @@ use std::{
 
 use app::AppState;
 use clap::Parser;
-use http::Uri;
 use lazy_static::lazy_static;
 use reqwest::Client;
 use sqlx::{
@@ -28,9 +27,9 @@ lazy_static! {
     static ref DEFAULT_SOCKET: SocketAddr = SocketAddr::new(IpAddr::V6(Ipv6Addr::LOCALHOST), 9543);
 }
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 #[command(author, version, about, long_about = None)]
-struct Args {
+pub struct Args {
     /// Socket to listen on
     ///
     /// The host and port to bind the HTTP service
@@ -54,30 +53,18 @@ struct Args {
     #[arg(long, default_value_t = 5)]
     database_pool: u32,
 
-    /// Minimum TTL on database cache before getting newer versions (seconds).
-    ///
-    /// NOT IMPLEMENTED
-    #[arg(long, default_value_t = 300)]
-    database_ttl_minimum: usize,
-
-    /// Maximum number of entries for in-memory cache
-    ///
-    /// NOT IMPLEMENTED
-    #[arg(long, default_value_t = 64_000)]
-    cache_entry_max_count: usize,
-
     /// S3 Bucket name
     ///
     /// Used to cache upstream artifacts
     #[arg(long)]
-    s3_bucket_name: String,
+    pub s3_bucket_name: String,
 
     /// Custom S3 Endpoint
     ///
     /// Used for S3 compatible interfaces such as minio or localstack.
     /// This is discovered automatically via AWS SDK if not defined.
     #[arg(long)]
-    s3_endpoint: Option<Uri>,
+    s3_endpoint: Option<String>,
 }
 
 #[tokio::main]
@@ -92,8 +79,8 @@ async fn main() {
     // Set up AWS SDK
     let config = aws_config::from_env().load().await;
     let mut s3_config = aws_sdk_s3::config::Builder::from(&config).force_path_style(true); // path style required for minio to work
-    if let Some(endpoint) = args.s3_endpoint {
-        s3_config = s3_config.endpoint_url(endpoint.to_string());
+    if let Some(endpoint) = &args.s3_endpoint {
+        s3_config = s3_config.endpoint_url(endpoint.as_str());
     }
     let s3 = aws_sdk_s3::Client::from_conf(s3_config.build());
 
@@ -128,7 +115,7 @@ async fn main() {
     };
 
     // build application
-    let app = app::provider_mirror_app(AppState::new(s3, db, http));
+    let app = app::provider_mirror_app(AppState::new(args.clone(), s3, db, http));
 
     let server = axum::Server::bind(&args.http_listen).serve(app.into_make_service());
     tracing::info!("Started server");

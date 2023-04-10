@@ -8,7 +8,7 @@ use tracing::Level;
 
 use crate::{
     artifacts::artifacts_handler, index::index_handler, registry_client::RegistryClient,
-    version::version_handler,
+    version::version_handler, Args,
 };
 
 #[derive(Clone)]
@@ -17,15 +17,22 @@ pub struct AppState {
     pub http_client: reqwest::Client,
     pub db_client: Pool<Postgres>,
     pub registry_client: RegistryClient,
+    pub args: Args,
 }
 
 impl AppState {
-    pub fn new(s3: aws_sdk_s3::Client, db: Pool<Postgres>, http: reqwest::Client) -> AppState {
+    pub fn new(
+        args: Args,
+        s3: aws_sdk_s3::Client,
+        db: Pool<Postgres>,
+        http: reqwest::Client,
+    ) -> AppState {
         AppState {
             s3_client: s3,
             http_client: http.clone(),
             db_client: db,
             registry_client: RegistryClient::new(http),
+            args,
         }
     }
 }
