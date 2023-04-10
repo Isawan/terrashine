@@ -1,6 +1,5 @@
 mod app;
 mod artifacts;
-mod error;
 mod index;
 mod version;
 mod registry_client;

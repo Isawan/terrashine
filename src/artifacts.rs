@@ -19,9 +19,8 @@ use serde::Deserialize;
 use sqlx::{query_as, PgPool};
 use tokio::try_join;
 use tokio_stream::Stream;
-use url::ParseError;
 
-use crate::app::AppState;
+use crate::{app::AppState, registry_client::RegistryClient};
 
 const PREALLOCATED_BUFFER_BYTES: usize = 12_582_912;
 const S3_MINIMUM_UPLOAD_CHUNK_BYTES: usize = 12_582_912;
@@ -84,6 +83,7 @@ impl IntoResponse for ArtifactResponse {
 pub async fn artifacts_handler(
     State(AppState {
         http_client: http,
+        registry_client: registry,
         db_client: db,
         s3_client: s3,
         ..
@@ -119,7 +119,7 @@ pub async fn artifacts_handler(
         None => {
             // Make upstream request and stash if artifact not stored.
             tracing::debug!("Fetching artifact from upstream");
-            let upstream_response = get_upstream(http, &artifact_detail).map_err(|e| {
+            let upstream_response = get_upstream(http, registry, &artifact_detail).map_err(|e| {
                 tracing::error!(reason = ?e, "Error occured fetching artifact upstream");
                 StatusCode::BAD_GATEWAY
             });
@@ -218,18 +218,16 @@ async fn get_artifact_from_database(
 
 async fn get_upstream(
     http: Client,
+    registry: RegistryClient,
     artifact: &ArtifactDetails,
 ) -> Result<Pin<Box<impl Stream<Item = reqwest::Result<Bytes>>>>, anyhow::Error> {
-    let provider_url = build_url(artifact)?;
-    let provider_response = http
-        .get(provider_url.as_str())
-        .send()
-        .await?
-        .error_for_status()?
-        .bytes()
+    let provider_path = format!(
+        "{}/{}/{}/download/{}/{}",
+        artifact.namespace, artifact.provider_type, artifact.version, artifact.os, artifact.arch
+    );
+    let provider: ProviderResponse = registry
+        .provider_get(&artifact.hostname, provider_path)
         .await?;
-    let provider: ProviderResponse = serde_json::from_slice(&provider_response)
-        .with_context(|| format!("Error parsing upstream body from url: {}", provider_url))?;
     let stream = http
         .get(provider.download_url)
         .send()
@@ -388,22 +386,4 @@ async fn presign_request(
         .presigned(PresigningConfig::expires_in(expires_in)?)
         .await?;
     Ok(presigned_request.uri().clone())
-}
-
-fn build_url(artifact: &ArtifactDetails) -> Result<Url, ParseError> {
-    let mut url_builder = String::new();
-    url_builder.push_str("https://");
-    url_builder.push_str(&artifact.hostname);
-    url_builder.push_str("/v1/providers/");
-    url_builder.push_str(&artifact.namespace);
-    url_builder.push('/');
-    url_builder.push_str(&artifact.provider_type);
-    url_builder.push('/');
-    url_builder.push_str(&artifact.version);
-    url_builder.push_str("/download/");
-    url_builder.push_str(&artifact.os);
-    url_builder.push('/');
-    url_builder.push_str(&artifact.arch);
-
-    Url::parse(&url_builder)
 }
