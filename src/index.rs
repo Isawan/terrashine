@@ -1,12 +1,10 @@
 use axum::response::IntoResponse;
 use http::{header::CONTENT_TYPE, HeaderValue};
-use reqwest::Url;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use tokio_stream::StreamExt;
-use url::ParseError;
 
 use axum::{
     extract::{Path, State},
@@ -60,7 +58,6 @@ struct ProviderPlatform {
 pub async fn index_handler(
     State(AppState {
         db_client: mut db,
-        http_client: http,
         registry_client: registry,
         ..
     }): State<AppState>,
@@ -104,19 +101,6 @@ pub async fn index_handler(
 
     let mirror_index = MirrorIndex::from(provider_versions);
     Result::Ok(mirror_index)
-}
-
-fn build_url(hostname: &str, namespace: &str, provider_type: &str) -> Result<Url, ParseError> {
-    let mut url_builder = String::new();
-    url_builder.push_str("https://");
-    url_builder.push_str(hostname);
-    url_builder.push_str("/v1/providers/");
-    url_builder.push_str(namespace);
-    url_builder.push('/');
-    url_builder.push_str(provider_type);
-    url_builder.push_str("/versions");
-
-    Url::parse(&url_builder)
 }
 
 async fn list_provider_versions(

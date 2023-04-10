@@ -39,6 +39,7 @@ pub enum RegistryError {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct DiscoveredServices {
     #[serde(rename = "providers.v1")]
     providers_v1: Option<String>,
@@ -86,7 +87,7 @@ impl RegistryClient {
         let services = self.discover_services(hostname).await?;
         if let Some(base_url) = services.providers_v1 {
             let path = path.as_ref();
-            let url = String::from(format!("https://{hostname}{base_url}{path}"));
+            let url = format!("https://{hostname}{base_url}{path}");
             let mut response_buffer = Vec::with_capacity(REGISTRY_METADATA_SIZE_MAX_BYTES);
             tracing::trace!(%url, "GET registry provider");
             let response = self.http.get(&url).send().await?.error_for_status()?;
@@ -99,10 +100,10 @@ impl RegistryClient {
             let result = serde_json::from_slice(&response_buffer[..])?;
             Ok(result)
         } else {
-            return Err(RegistryError::TerraformServiceNotSupported {
+            Err(RegistryError::TerraformServiceNotSupported {
                 service_type: "provider",
                 hostname: hostname.to_string(),
-            });
+            })
         }
     }
 }
