@@ -23,7 +23,7 @@ use tokio_stream::Stream;
 use crate::{app::AppState, registry_client::RegistryClient};
 
 const PREALLOCATED_BUFFER_BYTES: usize = 12_582_912;
-const S3_MINIMUM_UPLOAD_CHUNK_BYTES: usize = 12_582_912;
+const S3_MINIMUM_UPLOAD_CHUNK_BYTES: usize = 10_485_760;
 
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
@@ -256,20 +256,15 @@ async fn stash_artifact(
     mut stream: Pin<Box<impl Stream<Item = reqwest::Result<Bytes>>>>,
 ) -> Result<(), anyhow::Error> {
     let key = artifact.to_s3_key();
-
     let req = s3.create_multipart_upload().bucket("terrashine").key(&key);
-
-    tracing::info!(?req);
-
     let multipart_upload = req.send().await?;
-
     let upload_id = multipart_upload
         .upload_id()
         .context("No upload id returned from endpoint")?;
-
     let mut upload_buffer = Vec::with_capacity(PREALLOCATED_BUFFER_BYTES);
     let mut upload_parts = Vec::new();
     let mut part_number = 0;
+
     loop {
         match stream.next().await {
             Some(Ok(chunk)) => {
@@ -277,6 +272,7 @@ async fn stash_artifact(
                 if upload_buffer.len() < S3_MINIMUM_UPLOAD_CHUNK_BYTES {
                     continue;
                 }
+                // Once enough of the buffer has filled up, make the upload
                 let upload_part = s3
                     .upload_part()
                     .key(&key)
@@ -319,7 +315,7 @@ async fn stash_artifact(
             }
         }
     }
-    // Upload anything remaining in the buffer on stream completion
+    // Upload anything remaining in the buffer before stream completion
     if !upload_buffer.is_empty() {
         let upload_part = s3
             .upload_part()
@@ -349,12 +345,12 @@ async fn stash_artifact(
         .send()
         .await?;
 
-    store_artifact_id_in_database(db, artifact).await?;
+    store_artifact_in_database(db, artifact).await?;
 
     Ok(())
 }
 
-async fn store_artifact_id_in_database(
+async fn store_artifact_in_database(
     db: &PgPool,
     artifact: &Artifact,
 ) -> Result<(), anyhow::Error> {
