@@ -6,21 +6,26 @@ use tower_http::{
 };
 use tracing::Level;
 
-use crate::{artifacts::artifacts_handler, index::index_handler, version::version_handler};
+use crate::{
+    artifacts::artifacts_handler, index::index_handler, registry_client::RegistryClient,
+    version::version_handler,
+};
 
 #[derive(Clone)]
 pub struct AppState {
     pub s3_client: aws_sdk_s3::Client,
     pub http_client: reqwest::Client,
     pub db_client: Pool<Postgres>,
+    pub registry_client: RegistryClient,
 }
 
 impl AppState {
     pub fn new(s3: aws_sdk_s3::Client, db: Pool<Postgres>, http: reqwest::Client) -> AppState {
         AppState {
             s3_client: s3,
-            http_client: http,
+            http_client: http.clone(),
             db_client: db,
+            registry_client: RegistryClient::new(http),
         }
     }
 }

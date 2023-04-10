@@ -61,6 +61,7 @@ pub async fn index_handler(
     State(AppState {
         db_client: mut db,
         http_client: http,
+        registry_client: registry,
         ..
     }): State<AppState>,
     Path((hostname, namespace, provider_type)): Path<(String, String, String)>,
@@ -80,32 +81,13 @@ pub async fn index_handler(
         }
     }
 
-    let upstream_url =
-        build_url(&hostname, &namespace, &provider_type).map_err(|_| StatusCode::BAD_GATEWAY)?;
-
-    let upstream_response = match http.get(upstream_url).send().await {
-        Ok(response) => response,
-        Err(error) => {
-            tracing::error!(%error, "Error making request to upstream");
-            return Err(StatusCode::BAD_GATEWAY);
-        }
-    };
-
-    let body = match upstream_response.bytes().await {
-        Ok(b) => b,
-        Err(error) => {
-            tracing::error!(%error, "Error receiving body from upstream");
-            return Err(StatusCode::BAD_GATEWAY);
-        }
-    };
-
-    let provider_versions: ProviderVersions = match serde_json::from_slice(&body) {
-        Ok(v) => v,
-        Err(error) => {
-            tracing::error!(%error, "Could not deserialize upstream response");
-            return Err(StatusCode::BAD_GATEWAY);
-        }
-    };
+    let provider_versions: ProviderVersions = registry
+        .provider_get(&hostname, format!("{namespace}/{provider_type}/versions"))
+        .await
+        .map_err(|e| {
+            tracing::error!(reason = ?e, "Request to upstream registry failed");
+            StatusCode::BAD_GATEWAY
+        })?;
 
     let result = store_provider_versions(
         &mut db,
