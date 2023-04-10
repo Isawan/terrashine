@@ -69,16 +69,19 @@ fn archive_name(os: &str, arch: &str) -> String {
     s
 }
 
-fn build_url(id: i64) -> String {
-    let mut s = String::with_capacity(20);
-    s.push_str("https://localhost:9443/");
+fn build_url(base_url: String, id: i64) -> String {
+    let mut s = base_url;
     s.push_str("artifacts/");
     s.push_str(&id.to_string());
     s
 }
 
 pub async fn version_handler<'a>(
-    State(AppState { db_client: db, .. }): State<AppState>,
+    State(AppState {
+        db_client: db,
+        args,
+        ..
+    }): State<AppState>,
     Path((hostname, namespace, provider_type, version)): Path<(String, String, String, Version)>,
 ) -> Result<MirrorVersion, StatusCode> {
     let downloads_result =
@@ -90,7 +93,7 @@ pub async fn version_handler<'a>(
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
         }
     };
-    Ok(downloads.into())
+    Ok(MirrorVersion::build(downloads, args.http_redirect_url))
 }
 
 struct DatabaseDownloadResult {
@@ -99,15 +102,15 @@ struct DatabaseDownloadResult {
     id: i64,
 }
 
-impl From<Vec<DatabaseDownloadResult>> for MirrorVersion {
-    fn from(value: Vec<DatabaseDownloadResult>) -> Self {
+impl MirrorVersion {
+    fn build(result: Vec<DatabaseDownloadResult>, base_url: impl AsRef<str>) -> Self {
         let mut archives = HashMap::new();
-        for DatabaseDownloadResult { os, arch, id } in value.iter() {
+        for DatabaseDownloadResult { os, arch, id } in result.iter() {
             let target = archive_name(os, arch);
-            let url = build_url(*id);
+            let url = build_url(base_url.as_ref().to_string(), *id);
             archives.insert(target, TargetPlatformIdentifier { url });
         }
-        MirrorVersion { archives }
+        Self { archives }
     }
 }
 
