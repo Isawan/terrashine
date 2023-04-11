@@ -41,7 +41,7 @@ pub struct Args {
     /// Socket to listen on
     ///
     /// The host and port to bind the HTTP service
-    #[arg(long, default_value_t = *DEFAULT_SOCKET)]
+    #[arg(long, default_value_t = *DEFAULT_SOCKET, env = "TERRASHINE_HTTP_LISTEN")]
     http_listen: SocketAddr,
 
     /// URL for redirects, used for resolving relative URLs for redirects.
@@ -50,28 +50,32 @@ pub struct Args {
     ///
     /// NOTE: You must set up a TLS terminating reverse proxy in front of terrashine as
     /// terraform requires mirrors to be served over HTTPS.
-    #[arg(long, value_parser = validate_redirect_url)]
+    #[arg(long, value_parser = validate_redirect_url, env = "TERRASHINE_HTTP_REDIRECT_URL")]
     http_redirect_url: Url,
 
     /// Database connection URI
-    #[arg(long, default_value = "postgres://postgres:password@localhost/")]
+    #[arg(
+        long,
+        default_value = "postgres://postgres:password@localhost/",
+        env = "TERRASHINE_DATABASE_URL"
+    )]
     database_url: String,
 
     /// Number of database connections in pool
-    #[arg(long, default_value_t = 5)]
+    #[arg(long, default_value_t = 5, env = "TERRASHINE_DATABASE_POOL")]
     database_pool: u32,
 
     /// S3 Bucket name
     ///
     /// Used to cache upstream artifacts
-    #[arg(long)]
+    #[arg(long, env = "TERRASHINE_S3_BUCKET_NAME")]
     s3_bucket_name: String,
 
     /// Custom S3 Endpoint
     ///
     /// Used for S3 compatible interfaces such as minio or localstack.
     /// This is discovered automatically via AWS SDK if not defined.
-    #[arg(long)]
+    #[arg(long, env = "TERRASHINE_S3_ENDPOINT")]
     s3_endpoint: Option<Url>,
 }
 

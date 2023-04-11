@@ -166,7 +166,8 @@ async fn store_provider_versions(
         r#"
         insert into "terraform_provider" ("hostname", "namespace", "type", "last_refreshed")
         values ($1,$2,$3, now())
-        on conflict do nothing
+        on conflict ("hostname", "namespace", "type")
+            do update set "last_refreshed" = "excluded"."last_refreshed"
         "#,
         &hostname[..],
         &namespace[..],
@@ -186,12 +187,14 @@ async fn store_provider_versions(
         r#"
         insert into "terraform_provider_version"
             ("version", "os", "arch", "provider_id", "artifact_id")
-            select "t1".*, "t2"."id", null from
-                (select * from unnest($1::text[], $2::text[], $3::text[])) as t1,
+            select "t1"."hostname", "t1"."namespace", "t1"."type", "t2"."id", null from
+                (select * from unnest($1::text[], $2::text[], $3::text[]))
+                    as "t1"("hostname", "namespace", "type")
+                    ,
                 (select "id" from "terraform_provider"
                     where "hostname" = $4
                         and "namespace" = $5
-                        and "type" = $6) as t2
+                        and "type" = $6 limit 1) as t2
             on conflict do nothing
             returning 
             "version", "os", "arch";

@@ -1,3 +1,3 @@
-async fn refresh_provider_list(db: PgPool) -> () {
+async fn refresh_provider_list(db: &PgPool) -> () {
     todo!();
 }

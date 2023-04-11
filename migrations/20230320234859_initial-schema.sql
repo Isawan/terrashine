@@ -3,7 +3,7 @@ create table if not exists terraform_provider (
     "hostname" text not null check (char_length("hostname") <= 253),
     "namespace" text not null check (char_length("namespace") <= 255),
     "type" text not null check (char_length("type") <= 255),
-    "expires_at" timestamp with time zone not null,
+    "last_refreshed" timestamp with time zone not null,
     constraint unique_provider unique (hostname, namespace, type)
 );
 
