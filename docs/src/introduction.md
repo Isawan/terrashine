@@ -1,0 +1,16 @@
+# Terrashine
+
+Terrashine is a terraform provider mirror implementation that works by automatically caching dependencies as providers are requested.
+
+Use cases:
+
+* Avoid rate-limits when actively developing (github has a 60 request per hour rate limit)
+* Faster downloads of terraform providers, particularly in CI environments.
+* Ensuring that terraform providers don't disappear if the source has been deleted.
+
+## Dependencies
+
+The following components are required to run terrashine
+
+* PostgreSQL
+* S3-compatible object storage
