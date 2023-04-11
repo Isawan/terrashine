@@ -1,3 +1,204 @@
 {
-  "db": "PostgreSQL"
+  "db": "PostgreSQL",
+  "2e041c3c347777aa6d25bf41f7d36403c14e5c55d106047bb813182153b56337": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            update \"terraform_provider_version\"\n            set \"artifact_id\" = $1,\n                \"artifact_timestamp\" = now()\n                where \"id\" = $2;\n        "
+  },
+  "36c145aed2e637861368801a199a63645f062d8f8b21b173e08285674ff63685": {
+    "describe": {
+      "columns": [
+        {
+          "name": "version_id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "hostname",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "namespace",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "provider_type",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "version",
+          "ordinal": 4,
+          "type_info": "Text"
+        },
+        {
+          "name": "os",
+          "ordinal": 5,
+          "type_info": "Text"
+        },
+        {
+          "name": "arch",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "artifact_id",
+          "ordinal": 7,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n        select\n            \"terraform_provider_version\".\"id\" as \"version_id\",\n            \"hostname\",\n            \"namespace\",\n            \"type\" as \"provider_type\",\n            \"version\",\n            \"os\",\n            \"arch\",\n            \"artifact_id\"\n        from \"terraform_provider_version\"\n        inner join \"terraform_provider\"\n            on \"terraform_provider_version\".\"provider_id\" = \"terraform_provider\".\"id\"\n            where \"terraform_provider_version\".\"id\" = $1;\n        "
+  },
+  "63c5f7ebe8b39e48adf5d361493ce8b0140dedc7a8813a9749887a7fe49de8f6": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id!",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\n            select nextval('artifact_ids') as \"id!\";\n        "
+  },
+  "708e449f4981cf24fdf78f7704c07fe4909d3e96cd53189dd38b307dc0b2645b": {
+    "describe": {
+      "columns": [
+        {
+          "name": "version?",
+          "ordinal": 0,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        select \"version\" as \"version?\" from \"terraform_provider_version\"\n        left join \"terraform_provider\" on \n            \"terraform_provider_version\".\"provider_id\" = \"terraform_provider\".\"id\"\n            where \"terraform_provider\".\"hostname\" = $1\n                and \"terraform_provider\".\"namespace\" = $2\n                and \"terraform_provider\".\"type\" = $3;\n        "
+  },
+  "92a80d28675b1962dfb8e3081bbf9bbe81a352ed1ab1ce6260021f9feab63de2": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "os",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "arch",
+          "ordinal": 2,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text",
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        select \"terraform_provider_version\".\"id\", \"os\", \"arch\"\n        from \"terraform_provider_version\", \"terraform_provider\"\n        where\n            \"terraform_provider_version\".\"provider_id\" = \"terraform_provider\".\"id\"\n            and \"terraform_provider_version\".\"version\" = $1\n            and \"terraform_provider\".\"hostname\" = $2\n            and \"terraform_provider\".\"namespace\" = $3\n            and \"terraform_provider\".\"type\" = $4;\n        "
+  },
+  "da82a9a047ac40c4f60f48346a4166a925a931af616edd585ab34d9d2f386294": {
+    "describe": {
+      "columns": [
+        {
+          "name": "version",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "os",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "arch",
+          "ordinal": 2,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray",
+          "TextArray",
+          "TextArray",
+          "Text",
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        insert into \"terraform_provider_version\"\n            (\"version\", \"os\", \"arch\", \"provider_id\", \"artifact_id\")\n            select \"t1\".\"hostname\", \"t1\".\"namespace\", \"t1\".\"type\", \"t2\".\"id\", null from\n                (select * from unnest($1::text[], $2::text[], $3::text[]))\n                    as \"t1\"(\"hostname\", \"namespace\", \"type\")\n                    ,\n                (select \"id\" from \"terraform_provider\"\n                    where \"hostname\" = $4\n                        and \"namespace\" = $5\n                        and \"type\" = $6 limit 1) as t2\n            on conflict do nothing\n            returning \n            \"version\", \"os\", \"arch\";\n        "
+  },
+  "e8838de1761eaa58f6288282dbc3939ad9a9d66f24f2f8e99311c82352972430": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        insert into \"terraform_provider\" (\"hostname\", \"namespace\", \"type\", \"last_refreshed\")\n        values ($1,$2,$3, now())\n        on conflict (\"hostname\", \"namespace\", \"type\")\n            do update set \"last_refreshed\" = \"excluded\".\"last_refreshed\"\n        "
+  }
 }
