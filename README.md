@@ -2,21 +2,26 @@
 
 A terraform provider cache implemented as a caching proxy.
 
+> **Warning**
+> This is still in early development
+> Database schema migrations are not yet stable across versions
+
 ## Installation
 
 ## Usage
 
 ## Support
+
 Raise any bugs or feature requests are tickets
 
 ## Roadmap
 
-
 ## Contributing
+
 Open to contributions!
 
-
 ## Authors and acknowledgment
+
 * Isawan Millican
 
 ## License
