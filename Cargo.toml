@@ -25,7 +25,7 @@ tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter", "json", "tracing-log"] }
 url = { version = "^2.3.1", features = ["serde"] }
 tokio = {version = "1.26.0", features = ["full"]}
-sqlx = { version = "0.6.2", features = ["runtime-tokio-native-tls", "postgres"]}
+sqlx = { version = "0.6.2", features = ["runtime-tokio-native-tls", "postgres", "offline"]}
 tokio-stream = "0.1.12"
 hex = "0.4.3"
 testcontainers = "0.14.0"
