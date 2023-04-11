@@ -1,6 +1,6 @@
 # Terrashine
 
-A terraform provider cache implemented as a caching proxy.
+A terraform provider mirror implemented as a caching proxy.
 
 > **Warning**
 > This is still in early development
