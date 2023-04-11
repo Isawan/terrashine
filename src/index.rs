@@ -164,7 +164,7 @@ async fn store_provider_versions(
     // insert unknown providers if not existing in database
     let query = sqlx::query!(
         r#"
-        insert into "terraform_provider" ("hostname", "namespace", "type", "expires_at")
+        insert into "terraform_provider" ("hostname", "namespace", "type", "last_refreshed")
         values ($1,$2,$3, now())
         on conflict do nothing
         "#,

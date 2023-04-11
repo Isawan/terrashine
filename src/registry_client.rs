@@ -81,15 +81,16 @@ impl RegistryClient {
 
     pub async fn provider_get<A: for<'a> Deserialize<'a>>(
         &self,
-        hostname: &str,
+        hostname: impl AsRef<str>,
         path: impl AsRef<str>,
     ) -> Result<A, RegistryError> {
+        let hostname = hostname.as_ref();
         let services = self.discover_services(hostname).await?;
         if let Some(base_url) = services.providers_v1 {
             let path = path.as_ref();
             let url = format!("https://{hostname}{base_url}{path}");
             let mut response_buffer = Vec::with_capacity(REGISTRY_METADATA_SIZE_MAX_BYTES);
-            tracing::trace!(%url, "GET registry provider");
+            tracing::debug!(%url, "GET registry provider");
             let response = self.http.get(&url).send().await?.error_for_status()?;
             read_body_limit(
                 &mut response_buffer,

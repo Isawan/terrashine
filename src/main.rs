@@ -31,10 +31,7 @@ lazy_static! {
 fn validate_redirect_url(s: &str) -> Result<Url, anyhow::Error> {
     let url = Url::parse(s)?;
     anyhow::ensure!(!url.cannot_be_a_base(), "Must be fully qualified URL");
-    anyhow::ensure!(
-        s.chars().last().unwrap() == '/',
-        "URL must contain trailing slash"
-    );
+    anyhow::ensure!(s.ends_with('/'), "URL must contain trailing slash");
     Ok(url)
 }
 
