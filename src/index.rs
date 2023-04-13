@@ -12,7 +12,7 @@ use axum::{
 };
 use hyper::{HeaderMap, StatusCode};
 
-use crate::app::AppState;
+use crate::{app::AppState, error::TerrashineError, registry_client::RegistryClient};
 
 #[derive(Serialize, Debug)]
 pub struct MirrorIndex {
@@ -78,29 +78,34 @@ pub async fn index_handler(
         }
     }
 
+    let provider_versions =
+        refresh_versions(&db, registry, &hostname, &namespace, &provider_type).await?;
+
+    let mirror_index = MirrorIndex::from(provider_versions);
+    Result::Ok(mirror_index)
+}
+
+async fn refresh_versions(
+    db: &PgPool,
+    registry: RegistryClient,
+    hostname: &str,
+    namespace: &str,
+    provider_type: &str,
+) -> Result<ProviderVersions, TerrashineError> {
     let provider_versions: ProviderVersions = registry
         .provider_get(&hostname, format!("{namespace}/{provider_type}/versions"))
-        .await
-        .map_err(|e| {
-            tracing::error!(reason = ?e, "Request to upstream registry failed");
-            StatusCode::BAD_GATEWAY
-        })?;
+        .await?;
 
     let result = store_provider_versions(
-        &mut db,
+        &db,
         &hostname,
         &namespace,
         &provider_type,
         &provider_versions,
     )
-    .await;
-    if let Result::Err(error) = result {
-        tracing::warn!(%error, "Could not store terraform provider metadata to database");
-        return Err(StatusCode::INTERNAL_SERVER_ERROR);
-    }
+    .await?;
 
-    let mirror_index = MirrorIndex::from(provider_versions);
-    Result::Ok(mirror_index)
+    Ok(provider_versions)
 }
 
 async fn list_provider_versions(
@@ -108,7 +113,7 @@ async fn list_provider_versions(
     hostname: &str,
     namespace: &str,
     provider_type: &str,
-) -> Result<Option<MirrorIndex>, anyhow::Error> {
+) -> Result<Option<MirrorIndex>, TerrashineError> {
     let mut result = vec![];
     let mut row_count = 0;
 
@@ -143,12 +148,12 @@ async fn list_provider_versions(
 }
 
 async fn store_provider_versions(
-    db: &mut PgPool,
+    db: &PgPool,
     hostname: &str,
     namespace: &str,
     provider_type: &str,
     response: &ProviderVersions,
-) -> Result<u32, anyhow::Error> {
+) -> Result<u64, TerrashineError> {
     let mut transaction = db.begin().await?;
     let mut versions = vec![];
     let mut oses = vec![];
@@ -190,7 +195,7 @@ async fn store_provider_versions(
             select "t1"."hostname", "t1"."namespace", "t1"."type", "t2"."id", null from
                 (select * from unnest($1::text[], $2::text[], $3::text[]))
                     as "t1"("hostname", "namespace", "type")
-                    ,
+                    cross join
                 (select "id" from "terraform_provider"
                     where "hostname" = $4
                         and "namespace" = $5
@@ -211,7 +216,9 @@ async fn store_provider_versions(
     transaction.commit().await?;
     let count = records.len();
     tracing::info!(%count, "Saved provider versions to the database");
-    Ok(count.try_into()?)
+    Ok(count
+        .try_into()
+        .expect("Could not cast rows count to 64 bit number"))
 }
 
 impl From<ProviderVersions> for MirrorIndex {

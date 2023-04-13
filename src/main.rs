@@ -3,6 +3,7 @@ mod artifacts;
 mod index;
 mod registry_client;
 mod version;
+mod error;
 
 use std::{
     fmt::Debug,

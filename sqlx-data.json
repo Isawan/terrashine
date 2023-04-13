@@ -1,5 +1,42 @@
 {
   "db": "PostgreSQL",
+  "1b06db705aeb768339e8510013c9bda15e5edf2377b621f570331f226a63c2aa": {
+    "describe": {
+      "columns": [
+        {
+          "name": "version",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "os",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "arch",
+          "ordinal": 2,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray",
+          "TextArray",
+          "TextArray",
+          "Text",
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        insert into \"terraform_provider_version\"\n            (\"version\", \"os\", \"arch\", \"provider_id\", \"artifact_id\")\n            select \"t1\".\"hostname\", \"t1\".\"namespace\", \"t1\".\"type\", \"t2\".\"id\", null from\n                (select * from unnest($1::text[], $2::text[], $3::text[]))\n                    as \"t1\"(\"hostname\", \"namespace\", \"type\")\n                    cross join\n                (select \"id\" from \"terraform_provider\"\n                    where \"hostname\" = $4\n                        and \"namespace\" = $5\n                        and \"type\" = $6 limit 1) as t2\n            on conflict do nothing\n            returning \n            \"version\", \"os\", \"arch\";\n        "
+  },
   "2e041c3c347777aa6d25bf41f7d36403c14e5c55d106047bb813182153b56337": {
     "describe": {
       "columns": [],
@@ -149,43 +186,6 @@
       }
     },
     "query": "\n        select \"terraform_provider_version\".\"id\", \"os\", \"arch\"\n        from \"terraform_provider_version\", \"terraform_provider\"\n        where\n            \"terraform_provider_version\".\"provider_id\" = \"terraform_provider\".\"id\"\n            and \"terraform_provider_version\".\"version\" = $1\n            and \"terraform_provider\".\"hostname\" = $2\n            and \"terraform_provider\".\"namespace\" = $3\n            and \"terraform_provider\".\"type\" = $4;\n        "
-  },
-  "da82a9a047ac40c4f60f48346a4166a925a931af616edd585ab34d9d2f386294": {
-    "describe": {
-      "columns": [
-        {
-          "name": "version",
-          "ordinal": 0,
-          "type_info": "Text"
-        },
-        {
-          "name": "os",
-          "ordinal": 1,
-          "type_info": "Text"
-        },
-        {
-          "name": "arch",
-          "ordinal": 2,
-          "type_info": "Text"
-        }
-      ],
-      "nullable": [
-        false,
-        false,
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "TextArray",
-          "TextArray",
-          "TextArray",
-          "Text",
-          "Text",
-          "Text"
-        ]
-      }
-    },
-    "query": "\n        insert into \"terraform_provider_version\"\n            (\"version\", \"os\", \"arch\", \"provider_id\", \"artifact_id\")\n            select \"t1\".\"hostname\", \"t1\".\"namespace\", \"t1\".\"type\", \"t2\".\"id\", null from\n                (select * from unnest($1::text[], $2::text[], $3::text[]))\n                    as \"t1\"(\"hostname\", \"namespace\", \"type\")\n                    ,\n                (select \"id\" from \"terraform_provider\"\n                    where \"hostname\" = $4\n                        and \"namespace\" = $5\n                        and \"type\" = $6 limit 1) as t2\n            on conflict do nothing\n            returning \n            \"version\", \"os\", \"arch\";\n        "
   },
   "e8838de1761eaa58f6288282dbc3939ad9a9d66f24f2f8e99311c82352972430": {
     "describe": {

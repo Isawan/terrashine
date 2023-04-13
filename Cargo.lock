@@ -2427,7 +2427,6 @@ dependencies = [
  "axum",
  "clap",
  "futures",
- "hex",
  "http",
  "hyper",
  "lazy_static",

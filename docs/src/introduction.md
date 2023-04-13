@@ -10,7 +10,7 @@ Use cases:
 
 ## Installation
 
-Terrashine is a rust binary. Releases are published at:
+Terrashine is a rust binary. This is a project in early development, binaries are not currently published.
 
 ## Dependencies
 

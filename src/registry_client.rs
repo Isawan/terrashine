@@ -3,6 +3,8 @@ use std::str;
 use reqwest::{Client, Response};
 use serde::Deserialize;
 
+use crate::error::TerrashineError;
+
 const DISCOVERY_RESPONSE_SIZE_MAX_BYTES: usize = 16384; // 16KB
 const REGISTRY_METADATA_SIZE_MAX_BYTES: usize = 8388608; // 8MB
 
@@ -15,27 +17,6 @@ impl RegistryClient {
     pub fn new(http: Client) -> Self {
         RegistryClient { http }
     }
-}
-
-#[derive(thiserror::Error, Debug)]
-pub enum RegistryError {
-    #[error("Response received upstream was too large, limit of {limit} reached")]
-    ResponseTooLarge { limit: usize },
-    #[error("HTTP Error from upstream")]
-    UpstreamResponseFailure {
-        #[from]
-        source: reqwest::Error,
-    },
-    #[error("Error deserializing json response from registry")]
-    DeserializationError {
-        #[from]
-        source: serde_json::Error,
-    },
-    #[error("Terraform {service_type} service not supported by {hostname}")]
-    TerraformServiceNotSupported {
-        service_type: &'static str,
-        hostname: String,
-    },
 }
 
 #[derive(Debug, Deserialize)]
@@ -53,10 +34,10 @@ async fn read_body_limit(
     buffer: &mut Vec<u8>,
     mut response: Response,
     limit: usize,
-) -> Result<(), RegistryError> {
+) -> Result<(), TerrashineError> {
     while let Some(chunk) = response.chunk().await? {
         if buffer.len() + chunk.len() > limit {
-            return Err(RegistryError::ResponseTooLarge { limit });
+            return Err(TerrashineError::ProviderResponseTooLarge { limit });
         }
         buffer.extend(chunk);
     }
@@ -65,7 +46,10 @@ async fn read_body_limit(
 
 impl RegistryClient {
     /// Performs request upstream to handle terraform service discovery protocol
-    async fn discover_services(&self, hostname: &str) -> Result<DiscoveredServices, RegistryError> {
+    async fn discover_services(
+        &self,
+        hostname: &str,
+    ) -> Result<DiscoveredServices, TerrashineError> {
         let url = format!("https://{}/.well-known/terraform.json", hostname);
         let mut response_buffer = Vec::with_capacity(DISCOVERY_RESPONSE_SIZE_MAX_BYTES);
         let response = self.http.get(url).send().await?.error_for_status()?;
@@ -83,7 +67,7 @@ impl RegistryClient {
         &self,
         hostname: impl AsRef<str>,
         path: impl AsRef<str>,
-    ) -> Result<A, RegistryError> {
+    ) -> Result<A, TerrashineError> {
         let hostname = hostname.as_ref();
         let services = self.discover_services(hostname).await?;
         if let Some(base_url) = services.providers_v1 {
@@ -101,7 +85,7 @@ impl RegistryClient {
             let result = serde_json::from_slice(&response_buffer[..])?;
             Ok(result)
         } else {
-            Err(RegistryError::TerraformServiceNotSupported {
+            Err(TerrashineError::TerraformServiceNotSupported {
                 service_type: "provider",
                 hostname: hostname.to_string(),
             })
