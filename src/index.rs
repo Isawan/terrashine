@@ -110,14 +110,7 @@ async fn refresh_versions(
         .provider_get(&hostname, format!("{namespace}/{provider_type}/versions"))
         .await?;
 
-    store_provider_versions(
-        &db,
-        &hostname,
-        &namespace,
-        &provider_type,
-        &provider_versions,
-    )
-    .await?;
+    store_provider_versions(db, hostname, namespace, provider_type, &provider_versions).await?;
 
     Ok(provider_versions)
 }
