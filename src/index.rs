@@ -57,12 +57,12 @@ struct ProviderPlatform {
 
 pub async fn index_handler(
     State(AppState {
-        db_client: mut db,
+        db_client: db,
         registry_client: registry,
         ..
     }): State<AppState>,
     Path((hostname, namespace, provider_type)): Path<(String, String, String)>,
-) -> Result<MirrorIndex, StatusCode> {
+) -> Result<MirrorIndex, TerrashineError> {
     match list_provider_versions(&db, &hostname, &namespace, &provider_type).await {
         Ok(Some(mirror_index)) => {
             return Ok(mirror_index);
@@ -72,17 +72,19 @@ pub async fn index_handler(
         }
         Err(error) => {
             tracing::warn!(
-                reason = ?error,
+                reason = %error,
                 "Error occured fetching provider from database, fetching upstream"
             );
         }
     }
 
-    let provider_versions =
-        refresh_versions(&db, registry, &hostname, &namespace, &provider_type).await?;
-
-    let mirror_index = MirrorIndex::from(provider_versions);
-    Result::Ok(mirror_index)
+    match refresh_versions(&db, registry, &hostname, &namespace, &provider_type).await {
+        Err(err) => {
+            tracing::error!(reason=%err, "Occured occured while adding new provider from upstream");
+            Err(err)
+        }
+        Ok(versions) => Ok(MirrorIndex::from(versions)),
+    }
 }
 
 async fn refresh_versions(
@@ -92,11 +94,11 @@ async fn refresh_versions(
     namespace: &str,
     provider_type: &str,
 ) -> Result<ProviderVersions, TerrashineError> {
-    let provider_versions: ProviderVersions = registry
+    let provider_versions = registry
         .provider_get(&hostname, format!("{namespace}/{provider_type}/versions"))
         .await?;
 
-    let result = store_provider_versions(
+    store_provider_versions(
         &db,
         &hostname,
         &namespace,
@@ -169,7 +171,8 @@ async fn store_provider_versions(
     // insert unknown providers if not existing in database
     let query = sqlx::query!(
         r#"
-        insert into "terraform_provider" ("hostname", "namespace", "type", "last_refreshed")
+        insert into "terraform_provider"
+            ("hostname", "namespace", "type", "last_refreshed")
         values ($1,$2,$3, now())
         on conflict ("hostname", "namespace", "type")
             do update set "last_refreshed" = "excluded"."last_refreshed"
@@ -188,6 +191,11 @@ async fn store_provider_versions(
         );
     };
 
+    // Insert all the provider versions that are not already known
+    // The query is a little hairy, but its efficiently passing the
+    // version tuples as an array, turning them into rows and joining it
+    // on the hostname, namespace and type with the known providers to get
+    // the provider id.
     let query = sqlx::query!(
         r#"
         insert into "terraform_provider_version"
@@ -195,7 +203,7 @@ async fn store_provider_versions(
             select "t1"."hostname", "t1"."namespace", "t1"."type", "t2"."id", null from
                 (select * from unnest($1::text[], $2::text[], $3::text[]))
                     as "t1"("hostname", "namespace", "type")
-                    cross join
+                cross join
                 (select "id" from "terraform_provider"
                     where "hostname" = $4
                         and "namespace" = $5
@@ -211,14 +219,18 @@ async fn store_provider_versions(
         &namespace[..],
         &provider_type[..],
     );
+
     let records = query.fetch_all(&mut transaction).await?;
+
     tracing::debug!(?records, "Saving new provider versions to database");
     transaction.commit().await?;
+
     let count = records.len();
     tracing::info!(%count, "Saved provider versions to the database");
+
     Ok(count
         .try_into()
-        .expect("Could not cast rows count to 64 bit number"))
+        .expect("Could not cast row count to 64 bit number"))
 }
 
 impl From<ProviderVersions> for MirrorIndex {

@@ -1,9 +1,9 @@
 mod app;
 mod artifacts;
+mod error;
 mod index;
 mod registry_client;
 mod version;
-mod error;
 
 use std::{
     fmt::Debug,
@@ -104,6 +104,7 @@ async fn main() {
 
     let db_result = PgPoolOptions::new()
         .max_connections(args.database_pool)
+        .acquire_timeout(Duration::from_secs(10))
         .connect_with(db_options)
         .await;
 
