@@ -117,6 +117,10 @@ impl MirrorVersion {
 impl IntoResponse for MirrorVersion {
     fn into_response(self) -> Response {
         let mut headers = HeaderMap::new();
+        // NOTE: We don't cache here as in a highly available setup there are
+        // race conditions.
+        // This occurs when a newer version entry in the index list is serving a
+        // version which does not yet exist in the stale cache for this endpoint.
         headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
         let response = match serde_json::to_string(&self) {
             Ok(r) => r,
@@ -140,10 +144,11 @@ async fn list_downloads(
     let query = sqlx::query!(
         r#"
         select "terraform_provider_version"."id", "os", "arch"
-        from "terraform_provider_version", "terraform_provider"
-        where
+        from "terraform_provider_version"
+        inner join "terraform_provider" on 
             "terraform_provider_version"."provider_id" = "terraform_provider"."id"
-            and "terraform_provider_version"."version" = $1
+        where
+            "terraform_provider_version"."version" = $1
             and "terraform_provider"."hostname" = $2
             and "terraform_provider"."namespace" = $3
             and "terraform_provider"."type" = $4;

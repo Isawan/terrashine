@@ -72,7 +72,7 @@ impl IntoResponse for ArtifactResponse {
                 (http::header::LOCATION, self.uri),
                 (
                     http::header::CACHE_CONTROL,
-                    HeaderValue::from_static("public, max-age=10"),
+                    HeaderValue::from_static("public, max-age=60"),
                 ),
             ],
         )
@@ -379,7 +379,7 @@ async fn presign_request(
     bucket_name: impl AsRef<str>,
     artifact: &Artifact,
 ) -> Result<Uri, anyhow::Error> {
-    let expires_in = Duration::from_secs(30);
+    let expires_in = Duration::from_secs(120);
     let presigned_request = s3
         .get_object()
         .bucket(bucket_name.as_ref())

@@ -1,5 +1,8 @@
 use axum::response::IntoResponse;
-use http::{header::CONTENT_TYPE, HeaderValue};
+use http::{
+    header::{CACHE_CONTROL, CONTENT_TYPE},
+    HeaderValue,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::collections::HashMap;
@@ -10,7 +13,7 @@ use axum::{
     extract::{Path, State},
     response::Response,
 };
-use hyper::{HeaderMap, StatusCode};
+use hyper::HeaderMap;
 
 use crate::{app::AppState, error::TerrashineError, registry_client::RegistryClient};
 
@@ -25,6 +28,15 @@ impl IntoResponse for MirrorIndex {
     fn into_response(self) -> Response {
         let mut headers = HeaderMap::new();
         headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+        // This is safe to cache as it is the first endpoint hit by the client
+        // as part of the terraform mirror provider protocol.
+        // This plus the fact that the providers are never deleted,
+        // ensures that the client behaves correctly if the cached entry is stale
+        // as subsequent requests to endpoint will exist.
+        headers.insert(
+            CACHE_CONTROL,
+            HeaderValue::from_static("public, max-age=60"),
+        );
         let response = match serde_json::to_string(&self) {
             Ok(r) => r,
             Err(e) => {
@@ -73,14 +85,14 @@ pub async fn index_handler(
         Err(error) => {
             tracing::warn!(
                 reason = %error,
-                "Error occured fetching provider from database, fetching upstream"
+                "Error occurred fetching provider from database, fetching upstream"
             );
         }
     }
 
     match refresh_versions(&db, registry, &hostname, &namespace, &provider_type).await {
         Err(err) => {
-            tracing::error!(reason=%err, "Occured occured while adding new provider from upstream");
+            tracing::error!(reason=%err, "Occurred occurred while adding new provider from upstream");
             Err(err)
         }
         Ok(versions) => Ok(MirrorIndex::from(versions)),

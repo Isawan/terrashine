@@ -1,7 +1,7 @@
 use axum::{routing::get, Router};
 use sqlx::{Pool, Postgres};
 use tower_http::{
-    trace::{DefaultMakeSpan, DefaultOnFailure, DefaultOnRequest, DefaultOnResponse, TraceLayer},
+    trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
     LatencyUnit,
 };
 use tracing::Level;

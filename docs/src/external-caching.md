@@ -1,5 +1,6 @@
 # External Caching
 
-Terraform sets `Control-Control` headers where possible to allow caching by external reverse proxies.
-Currently the `/artifacts/+` endpoint is the only cachable entry without race conditions in a highly available setup.
-So it is the only endpoint to respond with `Content-Control` headers. The time on these headers is set short enough before the AWS presigned URL expires.
+Terraform sets `Cache-Control` headers where possible to allow caching by external reverse proxies.
+If caching is required, this should be achieved by configuring a reverse proxy to cache responses as appropriate.
+Cache headers are sometimes not set in cases where caching may incorrect behavior by the terraform client.
+For example: headers are not set in scenarios where caching could result in subsequent requests from the same client seeing inconsistent views of the available packages, resulting in an error when downloading packages.
