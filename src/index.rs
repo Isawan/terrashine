@@ -90,7 +90,7 @@ pub async fn index_handler(
         }
     }
 
-    match refresh_versions(&db, registry, &hostname, &namespace, &provider_type).await {
+    match refresh_versions(&db, &registry, &hostname, &namespace, &provider_type).await {
         Err(err) => {
             tracing::error!(reason=%err, "Occurred occurred while adding new provider from upstream");
             Err(err)
@@ -99,9 +99,9 @@ pub async fn index_handler(
     }
 }
 
-async fn refresh_versions(
+pub async fn refresh_versions(
     db: &PgPool,
-    registry: RegistryClient,
+    registry: &RegistryClient,
     hostname: &str,
     namespace: &str,
     provider_type: &str,

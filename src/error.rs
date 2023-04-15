@@ -25,6 +25,11 @@ pub enum TerrashineError {
         service_type: &'static str,
         hostname: String,
     },
+    #[error(transparent)]
+    Anyhow {
+        #[from]
+        source: anyhow::Error,
+    },
 }
 
 impl IntoResponse for TerrashineError {
@@ -35,6 +40,7 @@ impl IntoResponse for TerrashineError {
             TerrashineError::ProviderResponseFailure { .. } => StatusCode::BAD_GATEWAY,
             TerrashineError::ProviderDeserializationError { .. } => StatusCode::BAD_GATEWAY,
             TerrashineError::TerraformServiceNotSupported { .. } => StatusCode::BAD_GATEWAY,
+            TerrashineError::Anyhow { .. } => StatusCode::INTERNAL_SERVER_ERROR,
         }
         .into_response()
     }

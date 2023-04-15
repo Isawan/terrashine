@@ -4,6 +4,7 @@ mod error;
 mod index;
 mod registry_client;
 mod version;
+mod refresh;
 
 use std::{
     fmt::Debug,
