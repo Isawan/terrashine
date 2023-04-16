@@ -1,12 +1,11 @@
 use std::{
     collections::{hash_map::Entry, HashMap},
-    mem,
     time::{Duration, Instant},
 };
 
 use sqlx::PgPool;
 use tokio::sync::{self, oneshot};
-use tracing::{info_span, instrument, Instrument};
+use tracing::{info_span, Instrument};
 
 use crate::{
     error::TerrashineError,
@@ -96,7 +95,7 @@ pub(crate) async fn refresher(
                     }
                 }
                 // Do nothing if interval has not passed.
-                Entry::Occupied(o) => {
+                Entry::Occupied(_) => {
                     tracing::trace!("Provider is not stale, ignoring request to refresh");
                     if let Some(sender) = response_channel {
                         let result = sender.send(RefreshResponse::ProviderVersionNotStale);

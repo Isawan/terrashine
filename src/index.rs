@@ -5,10 +5,9 @@ use http::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use std::{collections::HashMap, fmt::DebugStruct};
+use std::collections::HashMap;
 use std::{fmt::Debug, time::Duration};
 use tokio::sync::{mpsc::error::SendTimeoutError, oneshot};
-use tokio_stream::StreamExt;
 
 use axum::{
     extract::{Path, State},
@@ -76,7 +75,6 @@ struct ProviderPlatform {
 pub(crate) async fn index_handler(
     State(AppState {
         db_client: db,
-        registry_client: registry,
         refresher_tx: tx,
         ..
     }): State<AppState>,
@@ -85,12 +83,12 @@ pub(crate) async fn index_handler(
     match list_provider_versions(&db, &hostname, &namespace, &provider_type).await {
         Ok(Some(mirror_index)) => {
             let provider = TerraformProvider {
-                hostname: hostname,
-                namespace: namespace,
-                provider_type: provider_type,
+                hostname,
+                namespace,
+                provider_type,
             };
             let result = tx.try_send(RefreshRequest {
-                provider: provider.clone(),
+                provider,
                 response_channel: None,
             });
             // We don't care if it errors in this path, log and continue on.
@@ -118,9 +116,9 @@ pub(crate) async fn index_handler(
     let (resp_tx, resp_rx) = oneshot::channel();
 
     let provider = TerraformProvider {
-        hostname: hostname,
-        namespace: namespace,
-        provider_type: provider_type,
+        hostname,
+        namespace,
+        provider_type,
     };
 
     tracing::debug!("Sending request to refresher task");
@@ -160,7 +158,7 @@ pub(crate) async fn index_handler(
         // This condition probably warrants a server restart.
         // Let the operator know, but it can continue operating as read-only so we don't
         // kill everything. Something has gone _very_ wrong in any case.
-        Err(e) => {
+        Err(_) => {
             tracing::error!("The provider refresher has dropped the channel for unknown reasons. This is really bad and the server may need restarting. Terrashine may now be read-only");
             Err(TerrashineError::BrokenRefresherChannel)
         }

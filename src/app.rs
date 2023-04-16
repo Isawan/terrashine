@@ -8,12 +8,8 @@ use tower_http::{
 use tracing::Level;
 
 use crate::{
-    artifacts::artifacts_handler,
-    index::index_handler,
-    refresh::{RefreshRequest, TerraformProvider},
-    registry_client::RegistryClient,
-    version::version_handler,
-    Args,
+    artifacts::artifacts_handler, index::index_handler, refresh::RefreshRequest,
+    registry_client::RegistryClient, version::version_handler, Args,
 };
 
 #[derive(Clone)]
