@@ -1,26 +1,17 @@
 use std::{
-    collections::{
-        hash_map::{Entry, RandomState},
-        HashMap,
-    },
-    mem,
+    collections::{hash_map::Entry, HashMap},
     time::{Duration, Instant},
 };
 
-use sqlx::{
-    postgres::{types::PgInterval, PgListener},
-    PgPool,
-};
+use sqlx::PgPool;
 use tokio::sync::{self, oneshot};
-use tracing::{info_span, instrument, span, Level};
+use tracing::info_span;
 
 use crate::{
     error::TerrashineError,
-    index::{self, refresh_versions, ProviderVersions},
+    index::{refresh_versions, ProviderVersions},
     registry_client::RegistryClient,
 };
-
-const SCHEDULER_SPREAD_DENOMINATOR: u128 = 16;
 
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct TerraformProvider {
@@ -78,7 +69,10 @@ pub(crate) async fn refresher(
                 .await;
                 v.insert(Instant::now());
                 if let Some(sender) = response_channel {
-                    sender.send(RefreshResponse::RefreshPerformed(result));
+                    let result = sender.send(RefreshResponse::RefreshPerformed(result));
+                    if let Err(e) = result {
+                        tracing::error!(reason=?e, "Error responding to refresh request");
+                    }
                 }
             }
             Entry::Occupied(mut o) if Instant::now() - *o.get() > refresh_interval => {
@@ -94,14 +88,20 @@ pub(crate) async fn refresher(
                 .await;
                 o.insert(Instant::now());
                 if let Some(sender) = response_channel {
-                    sender.send(RefreshResponse::RefreshPerformed(result));
+                    let result = sender.send(RefreshResponse::RefreshPerformed(result));
+                    if let Err(e) = result {
+                        tracing::error!(reason=?e, "Error responding to refresh request");
+                    }
                 }
             }
             // Do nothing if interval has not passed.
             Entry::Occupied(o) => {
                 tracing::trace!("Provider is not stale, ignoring request to refresh");
                 if let Some(sender) = response_channel {
-                    sender.send(RefreshResponse::ProviderVersionNotStale);
+                    let result = sender.send(RefreshResponse::ProviderVersionNotStale);
+                    if let Err(e) = result {
+                        tracing::error!(reason=?e, "Error responding to refresh request");
+                    }
                 }
             }
         };

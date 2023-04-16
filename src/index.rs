@@ -84,19 +84,19 @@ pub(crate) async fn index_handler(
 ) -> Result<MirrorIndex, TerrashineError> {
     match list_provider_versions(&db, &hostname, &namespace, &provider_type).await {
         Ok(Some(mirror_index)) => {
-            // let provider = TerraformProvider {
-            //     hostname: hostname,
-            //     namespace: namespace,
-            //     provider_type: provider_type,
-            // };
-            // let result = tx.try_send(RefreshRequest {
-            //     provider: provider.clone(),
-            //     response_channel: None,
-            // });
-            // // We don't care if it errors in this path, log and continue on.
-            // if let Err(e) = result {
-            //     tracing::trace!(reason=?e, "Failed to send provider refresh request");
-            // }
+            let provider = TerraformProvider {
+                hostname: hostname,
+                namespace: namespace,
+                provider_type: provider_type,
+            };
+            let result = tx.try_send(RefreshRequest {
+                provider: provider.clone(),
+                response_channel: None,
+            });
+            // We don't care if it errors in this path, log and continue on.
+            if let Err(e) = result {
+                tracing::trace!(reason=?e, "Failed to send provider refresh request");
+            }
             return Ok(mirror_index);
         }
         Ok(None) => {
@@ -206,9 +206,9 @@ async fn list_provider_versions(
         provider_type,
     );
 
-    let mut rows = query.fetch(db);
+    let rows = query.fetch_all(db).await?;
 
-    while let Some(row) = rows.try_next().await? {
+    for row in rows.into_iter() {
         row_count += 1;
         if let Some(version) = row.version {
             result.push(version);
