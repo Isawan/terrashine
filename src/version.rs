@@ -36,7 +36,7 @@ struct TargetPlatformIdentifier {
 
 #[derive(Debug, Deserialize)]
 #[serde(try_from = "String")]
-pub struct Version {
+pub(crate) struct Version {
     full: String,
 }
 
@@ -76,7 +76,7 @@ fn build_url(base_url: String, id: i64) -> String {
     s
 }
 
-pub async fn version_handler<'a>(
+pub(crate) async fn version_handler<'a>(
     State(AppState {
         db_client: db,
         args,

@@ -2,9 +2,9 @@ mod app;
 mod artifacts;
 mod error;
 mod index;
+mod refresh;
 mod registry_client;
 mod version;
-mod refresh;
 
 use std::{
     fmt::Debug,
@@ -22,9 +22,12 @@ use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions},
     ConnectOptions,
 };
+use tokio::sync::mpsc;
 use tracing::{error, log::LevelFilter};
 use tracing_subscriber::EnvFilter;
 use url::Url;
+
+use crate::{refresh::refresher, registry_client::RegistryClient};
 
 lazy_static! {
     static ref DEFAULT_SOCKET: SocketAddr = SocketAddr::new(IpAddr::V6(Ipv6Addr::LOCALHOST), 9543);
@@ -35,6 +38,13 @@ fn validate_redirect_url(s: &str) -> Result<Url, anyhow::Error> {
     anyhow::ensure!(!url.cannot_be_a_base(), "Must be fully qualified URL");
     anyhow::ensure!(s.ends_with('/'), "URL must contain trailing slash");
     Ok(url)
+}
+
+fn parse_humantime(s: &str) -> Result<Duration, anyhow::Error> {
+    match s.parse::<humantime::Duration>() {
+        Ok(v) => Ok(v.into()),
+        Err(e) => Err(e.into()),
+    }
 }
 
 #[derive(Parser, Debug, Clone)]
@@ -79,6 +89,15 @@ pub struct Args {
     /// This is discovered automatically via AWS SDK if not defined.
     #[arg(long, env = "TERRASHINE_S3_ENDPOINT")]
     s3_endpoint: Option<Url>,
+
+    /// Refresh interval
+    ///
+    /// Time between terraform index refreshes.
+    /// Terrashine starts a refresh clock starting when the first request arrives
+    /// on this instance of the application.
+    /// The clock is not persisted across application restarts.
+    #[arg(long, value_parser = parse_humantime, default_value = "3600s", env = "TERRASHINE_REFRESH_INTERVAL")]
+    refresh_interval: Duration,
 }
 
 #[tokio::main]
@@ -129,8 +148,22 @@ async fn main() {
         }
     };
 
+    let (tx, rx) = mpsc::channel(10000);
+
+    let refresher_db = db.clone();
+    let refresher_registry = RegistryClient::new(http.clone());
+    tokio::spawn(async move {
+        refresher(
+            &refresher_db,
+            &refresher_registry,
+            rx,
+            args.refresh_interval,
+        )
+        .await
+    });
+
     // build application
-    let app = app::provider_mirror_app(AppState::new(args.clone(), s3, db, http));
+    let app = app::provider_mirror_app(AppState::new(args.clone(), s3, db, http, tx));
 
     let server = axum::Server::bind(&args.http_listen).serve(app.into_make_service());
     tracing::info!("Started server");

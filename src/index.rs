@@ -5,8 +5,9 @@ use http::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use std::collections::HashMap;
-use std::fmt::Debug;
+use std::{collections::HashMap, fmt::DebugStruct};
+use std::{fmt::Debug, time::Duration};
+use tokio::sync::{mpsc::error::SendTimeoutError, oneshot};
 use tokio_stream::StreamExt;
 
 use axum::{
@@ -15,10 +16,15 @@ use axum::{
 };
 use hyper::HeaderMap;
 
-use crate::{app::AppState, error::TerrashineError, registry_client::RegistryClient};
+use crate::{
+    app::AppState,
+    error::TerrashineError,
+    refresh::{RefreshRequest, RefreshResponse, TerraformProvider},
+    registry_client::RegistryClient,
+};
 
 #[derive(Serialize, Debug)]
-pub struct MirrorIndex {
+pub(crate) struct MirrorIndex {
     // TODO: the nested hash value is always empty, we should implement
     // custom serialize to avoid unneeded work.
     versions: HashMap<String, HashMap<String, String>>,
@@ -67,16 +73,30 @@ struct ProviderPlatform {
     arch: String,
 }
 
-pub async fn index_handler(
+pub(crate) async fn index_handler(
     State(AppState {
         db_client: db,
         registry_client: registry,
+        refresher_tx: tx,
         ..
     }): State<AppState>,
     Path((hostname, namespace, provider_type)): Path<(String, String, String)>,
 ) -> Result<MirrorIndex, TerrashineError> {
     match list_provider_versions(&db, &hostname, &namespace, &provider_type).await {
         Ok(Some(mirror_index)) => {
+            // let provider = TerraformProvider {
+            //     hostname: hostname,
+            //     namespace: namespace,
+            //     provider_type: provider_type,
+            // };
+            // let result = tx.try_send(RefreshRequest {
+            //     provider: provider.clone(),
+            //     response_channel: None,
+            // });
+            // // We don't care if it errors in this path, log and continue on.
+            // if let Err(e) = result {
+            //     tracing::trace!(reason=?e, "Failed to send provider refresh request");
+            // }
             return Ok(mirror_index);
         }
         Ok(None) => {
@@ -90,16 +110,64 @@ pub async fn index_handler(
         }
     }
 
-    match refresh_versions(&db, &registry, &hostname, &namespace, &provider_type).await {
-        Err(err) => {
+    // If we didn't see anything in the database, now we'll request it from upstream
+    // We do this by sending a message to the refresher channel and then wait for a
+    // message back via the oneshot channel to confirm provider has been refreshed.
+    // This path only occurs when a brand new provider index is first encountered.
+    // The refresher handles updating known terraform provider versions.
+    let (resp_tx, resp_rx) = oneshot::channel();
+
+    let provider = TerraformProvider {
+        hostname: hostname,
+        namespace: namespace,
+        provider_type: provider_type,
+    };
+
+    tracing::debug!("Sending request to refresher task");
+    tx.send_timeout(
+        RefreshRequest {
+            provider: provider.clone(),
+            response_channel: Some(resp_tx),
+        },
+        Duration::from_secs(1),
+    )
+    .await
+    .map_err(|e| {
+        match e {
+            SendTimeoutError::Timeout(_) => {
+                tracing::error!("Sending to the refresher channel has timed out. Server may be overloaded");
+                TerrashineError::TooManyRequestsInChannel { channel_name: "refresher" }
+            }
+            SendTimeoutError::Closed(_) => {
+                tracing::error!("The provider refresher has dropped the channel for unknown reasons. This is really bad and the server may need restarting. Terrashine may now be read-only");
+                TerrashineError::BrokenRefresherChannel
+            }
+        }
+    }
+    )?;
+
+    match resp_rx.await {
+        Ok(RefreshResponse::RefreshPerformed(Ok(versions))) => Ok(MirrorIndex::from(versions)),
+        Ok(RefreshResponse::RefreshPerformed(Err(err))) => {
             tracing::error!(reason=%err, "Occurred occurred while adding new provider from upstream");
             Err(err)
         }
-        Ok(versions) => Ok(MirrorIndex::from(versions)),
+        Ok(RefreshResponse::ProviderVersionNotStale) => {
+            let err = TerrashineError::ConcurrentUpstreamProviderFetch { provider };
+            tracing::error!(reason=%err, "Concurrent upstream fetch occurred while fetching provider from upstream");
+            Err(err)
+        }
+        // This condition probably warrants a server restart.
+        // Let the operator know, but it can continue operating as read-only so we don't
+        // kill everything. Something has gone _very_ wrong in any case.
+        Err(e) => {
+            tracing::error!("The provider refresher has dropped the channel for unknown reasons. This is really bad and the server may need restarting. Terrashine may now be read-only");
+            Err(TerrashineError::BrokenRefresherChannel)
+        }
     }
 }
 
-pub async fn refresh_versions(
+pub(crate) async fn refresh_versions(
     db: &PgPool,
     registry: &RegistryClient,
     hostname: &str,

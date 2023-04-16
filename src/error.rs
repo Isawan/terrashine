@@ -1,5 +1,10 @@
+use std::error::Error;
+
 use axum::response::IntoResponse;
 use http::StatusCode;
+use tokio::sync::mpsc::error::SendTimeoutError;
+
+use crate::refresh::TerraformProvider;
 
 #[derive(Debug, thiserror::Error)]
 pub enum TerrashineError {
@@ -25,6 +30,12 @@ pub enum TerrashineError {
         service_type: &'static str,
         hostname: String,
     },
+    #[error("Terrashine concurrent upstream fetch occurred when fetching new terraform provider")]
+    ConcurrentUpstreamProviderFetch { provider: TerraformProvider },
+    #[error("Too many requests in channel ({channel_name}) caused a timeout")]
+    TooManyRequestsInChannel { channel_name: &'static str },
+    #[error("Broken refresher channel as the receiver has been dropped")]
+    BrokenRefresherChannel,
     #[error(transparent)]
     Anyhow {
         #[from]
@@ -41,6 +52,11 @@ impl IntoResponse for TerrashineError {
             TerrashineError::ProviderDeserializationError { .. } => StatusCode::BAD_GATEWAY,
             TerrashineError::TerraformServiceNotSupported { .. } => StatusCode::BAD_GATEWAY,
             TerrashineError::Anyhow { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            TerrashineError::ConcurrentUpstreamProviderFetch { .. } => {
+                StatusCode::TOO_MANY_REQUESTS
+            }
+            TerrashineError::TooManyRequestsInChannel { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            TerrashineError::BrokenRefresherChannel => StatusCode::INTERNAL_SERVER_ERROR,
         }
         .into_response()
     }

@@ -1,5 +1,6 @@
 use axum::{routing::get, Router};
 use sqlx::{Pool, Postgres};
+use tokio::sync::mpsc;
 use tower_http::{
     trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
     LatencyUnit,
@@ -7,25 +8,31 @@ use tower_http::{
 use tracing::Level;
 
 use crate::{
-    artifacts::artifacts_handler, index::index_handler, registry_client::RegistryClient,
-    version::version_handler, Args,
+    artifacts::artifacts_handler,
+    index::index_handler,
+    refresh::{RefreshRequest, TerraformProvider},
+    registry_client::RegistryClient,
+    version::version_handler,
+    Args,
 };
 
 #[derive(Clone)]
-pub struct AppState {
-    pub s3_client: aws_sdk_s3::Client,
-    pub http_client: reqwest::Client,
-    pub db_client: Pool<Postgres>,
-    pub registry_client: RegistryClient,
-    pub args: Args,
+pub(crate) struct AppState {
+    pub(crate) s3_client: aws_sdk_s3::Client,
+    pub(crate) http_client: reqwest::Client,
+    pub(crate) db_client: Pool<Postgres>,
+    pub(crate) registry_client: RegistryClient,
+    pub(crate) args: Args,
+    pub(crate) refresher_tx: mpsc::Sender<RefreshRequest>,
 }
 
 impl AppState {
-    pub fn new(
+    pub(crate) fn new(
         args: Args,
         s3: aws_sdk_s3::Client,
         db: Pool<Postgres>,
         http: reqwest::Client,
+        refresher_tx: mpsc::Sender<RefreshRequest>,
     ) -> AppState {
         AppState {
             s3_client: s3,
@@ -33,11 +40,12 @@ impl AppState {
             db_client: db,
             registry_client: RegistryClient::new(http),
             args,
+            refresher_tx,
         }
     }
 }
 
-pub fn provider_mirror_app(state: AppState) -> Router {
+pub(crate) fn provider_mirror_app(state: AppState) -> Router {
     Router::new()
         .route(
             "/:hostname/:namespace/:provider_type/index.json",

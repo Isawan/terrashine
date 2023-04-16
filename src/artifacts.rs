@@ -80,7 +80,7 @@ impl IntoResponse for ArtifactResponse {
     }
 }
 
-pub async fn artifacts_handler(
+pub(crate) async fn artifacts_handler(
     State(AppState {
         http_client: http,
         registry_client: registry,
