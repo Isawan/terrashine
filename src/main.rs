@@ -13,7 +13,6 @@ use std::{
     str::FromStr,
     time::Duration,
 };
-
 use app::AppState;
 use clap::Parser;
 use lazy_static::lazy_static;

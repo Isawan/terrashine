@@ -1,17 +1,15 @@
+use crate::{
+    error::TerrashineError,
+    index::refresh_versions,
+    registry::{ProviderVersions, RegistryClient},
+};
+use sqlx::PgPool;
 use std::{
     collections::{hash_map::Entry, HashMap},
     time::{Duration, Instant},
 };
-
-use sqlx::PgPool;
 use tokio::sync::{self, oneshot};
 use tracing::{info_span, Instrument};
-
-use crate::{
-    error::TerrashineError,
-    index::{refresh_versions, ProviderVersions},
-    registry::RegistryClient,
-};
 
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct TerraformProvider {

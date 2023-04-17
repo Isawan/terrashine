@@ -1,6 +1,5 @@
 use axum::response::IntoResponse;
 use http::StatusCode;
-
 use crate::refresh::TerraformProvider;
 
 #[derive(Debug, thiserror::Error)]

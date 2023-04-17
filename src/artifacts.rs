@@ -1,5 +1,7 @@
-use std::{pin::Pin, time::Duration};
-
+use crate::{
+    app::AppState,
+    registry::{ProviderResponse, RegistryClient},
+};
 use anyhow::Context;
 use aws_sdk_s3::{
     presigning::PresigningConfig,
@@ -12,45 +14,15 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use futures::{future::TryFutureExt, StreamExt};
-
 use http::{HeaderValue, StatusCode, Uri};
-use reqwest::{Client, Url};
-use serde::Deserialize;
+use reqwest::Client;
 use sqlx::{query_as, PgPool};
+use std::{pin::Pin, time::Duration};
 use tokio::try_join;
 use tokio_stream::Stream;
 
-use crate::{app::AppState, registry::RegistryClient};
-
 const PREALLOCATED_BUFFER_BYTES: usize = 12_582_912;
 const S3_MINIMUM_UPLOAD_CHUNK_BYTES: usize = 10_485_760;
-
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
-pub struct ProviderResponse {
-    protocols: Vec<String>,
-    os: String,
-    arch: String,
-    filename: String,
-    download_url: Url,
-    shasums_url: Url,
-    shasums_signature_url: Url,
-    shasum: String,
-    signing_keys: ProviderSigningKeys,
-}
-
-#[allow(dead_code)]
-#[derive(Deserialize, Debug)]
-struct ProviderSigningKeys {
-    gpg_public_keys: Vec<ProviderGPGPublicKey>,
-}
-
-#[allow(dead_code)]
-#[derive(Deserialize, Debug)]
-struct ProviderGPGPublicKey {
-    key_id: String,
-    ascii_armor: String,
-}
 
 struct ArtifactResponse {
     uri: HeaderValue,

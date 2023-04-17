@@ -4,13 +4,11 @@ use sqlx::PgPool;
 use std::collections::HashMap;
 use tokio_stream::StreamExt;
 use url::Url;
-
 use axum::{
     extract::{Path, State},
     response::{IntoResponse, Response},
 };
 use hyper::StatusCode;
-
 use crate::app::AppState;
 
 #[derive(Serialize)]

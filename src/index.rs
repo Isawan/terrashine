@@ -1,26 +1,24 @@
-use axum::response::IntoResponse;
-use http::{
-    header::{CACHE_CONTROL, CONTENT_TYPE},
-    HeaderValue,
-};
-use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
-use std::collections::HashMap;
-use std::{fmt::Debug, time::Duration};
-use tokio::sync::{mpsc::error::SendTimeoutError, oneshot};
-
-use axum::{
-    extract::{Path, State},
-    response::Response,
-};
-use hyper::HeaderMap;
-
 use crate::{
     app::AppState,
     error::TerrashineError,
     refresh::{RefreshRequest, RefreshResponse, TerraformProvider},
-    registry::RegistryClient,
+    registry::{ProviderPlatform, ProviderVersionItem, ProviderVersions, RegistryClient},
 };
+use axum::response::IntoResponse;
+use axum::{
+    extract::{Path, State},
+    response::Response,
+};
+use http::{
+    header::{CACHE_CONTROL, CONTENT_TYPE},
+    HeaderValue,
+};
+use hyper::HeaderMap;
+use serde::Serialize;
+use sqlx::PgPool;
+use std::collections::HashMap;
+use std::{fmt::Debug, time::Duration};
+use tokio::sync::{mpsc::error::SendTimeoutError, oneshot};
 
 #[derive(Serialize, Debug)]
 pub(crate) struct MirrorIndex {
@@ -51,25 +49,6 @@ impl IntoResponse for MirrorIndex {
         };
         (headers, response).into_response()
     }
-}
-
-#[derive(Deserialize, Debug)]
-pub struct ProviderVersions {
-    versions: Vec<ProviderVersionItem>,
-}
-
-#[allow(dead_code)]
-#[derive(Deserialize, Debug)]
-struct ProviderVersionItem {
-    version: String,
-    protocols: Vec<String>,
-    platforms: Vec<ProviderPlatform>,
-}
-
-#[derive(Deserialize, Debug)]
-struct ProviderPlatform {
-    os: String,
-    arch: String,
 }
 
 pub(crate) async fn index_handler(
