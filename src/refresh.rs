@@ -1,6 +1,6 @@
 use crate::{
     error::TerrashineError,
-    index::refresh_versions,
+    http::index::refresh_versions,
     registry::{ProviderVersions, RegistryClient},
 };
 use sqlx::PgPool;

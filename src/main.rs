@@ -1,18 +1,9 @@
 mod app;
-mod artifacts;
 mod error;
-mod index;
+mod http;
 mod refresh;
 mod registry;
-mod version;
 
-use std::{
-    fmt::Debug,
-    net::{IpAddr, Ipv6Addr, SocketAddr},
-    process::exit,
-    str::FromStr,
-    time::Duration,
-};
 use app::AppState;
 use clap::Parser;
 use lazy_static::lazy_static;
@@ -20,6 +11,13 @@ use reqwest::Client;
 use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions},
     ConnectOptions,
+};
+use std::{
+    fmt::Debug,
+    net::{IpAddr, Ipv6Addr, SocketAddr},
+    process::exit,
+    str::FromStr,
+    time::Duration,
 };
 use tokio::sync::mpsc;
 use tracing::{error, log::LevelFilter};

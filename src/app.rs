@@ -8,8 +8,8 @@ use tower_http::{
 use tracing::Level;
 
 use crate::{
-    artifacts::artifacts_handler, index::index_handler, refresh::RefreshRequest,
-    registry::RegistryClient, version::version_handler, Args,
+    http::artifacts::artifacts_handler, http::index::index_handler, http::version::version_handler,
+    refresh::RefreshRequest, registry::RegistryClient, Args,
 };
 
 #[derive(Clone)]
