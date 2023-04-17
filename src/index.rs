@@ -173,7 +173,7 @@ pub(crate) async fn refresh_versions(
     provider_type: &str,
 ) -> Result<ProviderVersions, TerrashineError> {
     let provider_versions = registry
-        .provider_get(&hostname, format!("{namespace}/{provider_type}/versions"))
+        .provider_get(&hostname, &format!("{namespace}/{provider_type}/versions"))
         .await?;
 
     store_provider_versions(db, hostname, namespace, provider_type, &provider_versions).await?;

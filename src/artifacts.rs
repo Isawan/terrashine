@@ -229,7 +229,7 @@ async fn get_upstream(
         artifact.namespace, artifact.provider_type, artifact.version, artifact.os, artifact.arch
     );
     let provider: ProviderResponse = registry
-        .provider_get(&artifact.hostname, provider_path)
+        .provider_get(&artifact.hostname, &provider_path)
         .await?;
     let stream = http
         .get(provider.download_url)
@@ -255,15 +255,12 @@ async fn allocate_artifact_id(db: &PgPool) -> Result<i64, anyhow::Error> {
 async fn stash_artifact(
     db: &PgPool,
     s3: &aws_sdk_s3::Client,
-    bucket_name: impl AsRef<str>,
+    bucket_name: &str,
     artifact: &Artifact,
     mut stream: Pin<Box<impl Stream<Item = reqwest::Result<Bytes>>>>,
 ) -> Result<(), anyhow::Error> {
     let key = artifact.to_s3_key();
-    let req = s3
-        .create_multipart_upload()
-        .bucket(bucket_name.as_ref())
-        .key(&key);
+    let req = s3.create_multipart_upload().bucket(bucket_name).key(&key);
     let multipart_upload = req.send().await?;
     let upload_id = multipart_upload
         .upload_id()
@@ -283,7 +280,7 @@ async fn stash_artifact(
                 let upload_part = s3
                     .upload_part()
                     .key(&key)
-                    .bucket(bucket_name.as_ref())
+                    .bucket(bucket_name)
                     .upload_id(upload_id)
                     .body(ByteStream::from(Bytes::from(upload_buffer)))
                     .part_number(part_number)
@@ -307,7 +304,7 @@ async fn stash_artifact(
                 let abort_response = s3
                     .abort_multipart_upload()
                     .key(&key)
-                    .bucket(bucket_name.as_ref())
+                    .bucket(bucket_name)
                     .upload_id(upload_id)
                     .send()
                     .await;
@@ -327,7 +324,7 @@ async fn stash_artifact(
         let upload_part = s3
             .upload_part()
             .key(&key)
-            .bucket(bucket_name.as_ref())
+            .bucket(bucket_name)
             .upload_id(upload_id)
             .body(upload_buffer.into())
             .part_number(part_number)
@@ -345,7 +342,7 @@ async fn stash_artifact(
         .set_parts(Some(upload_parts))
         .build();
     s3.complete_multipart_upload()
-        .bucket(bucket_name.as_ref())
+        .bucket(bucket_name)
         .key(&key)
         .multipart_upload(completed_upload_request)
         .upload_id(upload_id)
@@ -376,13 +373,13 @@ async fn store_artifact_in_database(db: &PgPool, artifact: &Artifact) -> Result<
 
 async fn presign_request(
     s3: &aws_sdk_s3::Client,
-    bucket_name: impl AsRef<str>,
+    bucket_name: &str,
     artifact: &Artifact,
 ) -> Result<Uri, anyhow::Error> {
     let expires_in = Duration::from_secs(120);
     let presigned_request = s3
         .get_object()
-        .bucket(bucket_name.as_ref())
+        .bucket(bucket_name)
         .key(artifact.to_s3_key())
         .presigned(PresigningConfig::expires_in(expires_in)?)
         .await?;

@@ -93,7 +93,7 @@ pub(crate) async fn version_handler<'a>(
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
         }
     };
-    Ok(MirrorVersion::build(downloads, args.http_redirect_url))
+    Ok(MirrorVersion::build(downloads, args.http_redirect_url.as_str()))
 }
 
 struct DatabaseDownloadResult {
@@ -103,11 +103,11 @@ struct DatabaseDownloadResult {
 }
 
 impl MirrorVersion {
-    fn build(result: Vec<DatabaseDownloadResult>, base_url: impl AsRef<str>) -> Self {
+    fn build(result: Vec<DatabaseDownloadResult>, base_url: &str) -> Self {
         let mut archives = HashMap::new();
         for DatabaseDownloadResult { os, arch, id } in result.iter() {
             let target = archive_name(os, arch);
-            let url = build_url(base_url.as_ref().to_string(), *id);
+            let url = build_url(base_url.to_string(), *id);
             archives.insert(target, TargetPlatformIdentifier { url });
         }
         Self { archives }

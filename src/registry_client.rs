@@ -1,7 +1,6 @@
-use std::str;
-
 use reqwest::{Client, Response};
 use serde::Deserialize;
+use std::str;
 
 use crate::error::TerrashineError;
 
@@ -65,13 +64,12 @@ impl RegistryClient {
 
     pub async fn provider_get<A: for<'a> Deserialize<'a>>(
         &self,
-        hostname: impl AsRef<str>,
-        path: impl AsRef<str>,
+        hostname: &str,
+        path: &str,
     ) -> Result<A, TerrashineError> {
         let hostname = hostname.as_ref();
         let services = self.discover_services(hostname).await?;
         if let Some(base_url) = services.providers_v1 {
-            let path = path.as_ref();
             let url = format!("https://{hostname}{base_url}{path}");
             let mut response_buffer = Vec::with_capacity(REGISTRY_METADATA_SIZE_MAX_BYTES);
             tracing::debug!(%url, "GET registry provider");
