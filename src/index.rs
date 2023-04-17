@@ -19,7 +19,7 @@ use crate::{
     app::AppState,
     error::TerrashineError,
     refresh::{RefreshRequest, RefreshResponse, TerraformProvider},
-    registry_client::RegistryClient,
+    registry::RegistryClient,
 };
 
 #[derive(Serialize, Debug)]

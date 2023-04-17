@@ -20,7 +20,7 @@ use sqlx::{query_as, PgPool};
 use tokio::try_join;
 use tokio_stream::Stream;
 
-use crate::{app::AppState, registry_client::RegistryClient};
+use crate::{app::AppState, registry::RegistryClient};
 
 const PREALLOCATED_BUFFER_BYTES: usize = 12_582_912;
 const S3_MINIMUM_UPLOAD_CHUNK_BYTES: usize = 10_485_760;

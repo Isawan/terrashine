@@ -3,7 +3,7 @@ mod artifacts;
 mod error;
 mod index;
 mod refresh;
-mod registry_client;
+mod registry;
 mod version;
 
 use std::{
@@ -27,7 +27,7 @@ use tracing::{error, log::LevelFilter};
 use tracing_subscriber::EnvFilter;
 use url::Url;
 
-use crate::{refresh::refresher, registry_client::RegistryClient};
+use crate::{refresh::refresher, registry::RegistryClient};
 
 lazy_static! {
     static ref DEFAULT_SOCKET: SocketAddr = SocketAddr::new(IpAddr::V6(Ipv6Addr::LOCALHOST), 9543);

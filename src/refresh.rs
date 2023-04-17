@@ -10,7 +10,7 @@ use tracing::{info_span, Instrument};
 use crate::{
     error::TerrashineError,
     index::{refresh_versions, ProviderVersions},
-    registry_client::RegistryClient,
+    registry::RegistryClient,
 };
 
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
