@@ -3,7 +3,6 @@ mod error;
 mod http;
 mod refresh;
 mod registry;
-
 use app::AppState;
 use clap::Parser;
 use lazy_static::lazy_static;
@@ -103,7 +102,7 @@ async fn main() {
 
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env())
-        //.json()
+        .pretty()
         .init();
 
     // Set up AWS SDK

@@ -1,6 +1,6 @@
+use crate::refresh::TerraformProvider;
 use axum::response::IntoResponse;
 use http::StatusCode;
-use crate::refresh::TerraformProvider;
 
 #[derive(Debug, thiserror::Error)]
 pub enum TerrashineError {
@@ -27,7 +27,7 @@ pub enum TerrashineError {
         hostname: String,
     },
     #[error("Terrashine concurrent upstream fetch occurred when fetching new terraform provider")]
-    ConcurrentUpstreamProviderFetch { provider: TerraformProvider },
+    ConcurrentProviderFetch { provider: TerraformProvider },
     #[error("Too many requests in channel ({channel_name}) caused a timeout")]
     TooManyRequestsInChannel { channel_name: &'static str },
     #[error("Broken refresher channel as the receiver has been dropped")]
@@ -48,9 +48,7 @@ impl IntoResponse for TerrashineError {
             TerrashineError::ProviderDeserializationError { .. } => StatusCode::BAD_GATEWAY,
             TerrashineError::TerraformServiceNotSupported { .. } => StatusCode::BAD_GATEWAY,
             TerrashineError::Anyhow { .. } => StatusCode::INTERNAL_SERVER_ERROR,
-            TerrashineError::ConcurrentUpstreamProviderFetch { .. } => {
-                StatusCode::TOO_MANY_REQUESTS
-            }
+            TerrashineError::ConcurrentProviderFetch { .. } => StatusCode::TOO_MANY_REQUESTS,
             TerrashineError::TooManyRequestsInChannel { .. } => StatusCode::INTERNAL_SERVER_ERROR,
             TerrashineError::BrokenRefresherChannel => StatusCode::INTERNAL_SERVER_ERROR,
         }

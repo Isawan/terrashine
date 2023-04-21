@@ -9,7 +9,7 @@ use std::{
     time::{Duration, Instant},
 };
 use tokio::sync::{self, oneshot};
-use tracing::{info_span, Instrument};
+use tracing::{info_span, Instrument, Span};
 
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct TerraformProvider {
@@ -22,6 +22,7 @@ pub struct TerraformProvider {
 pub(crate) struct RefreshRequest {
     pub(crate) provider: TerraformProvider,
     pub(crate) response_channel: Option<oneshot::Sender<RefreshResponse>>,
+    pub(crate) span: Span,
 }
 
 #[derive(Debug)]
@@ -32,8 +33,8 @@ pub(crate) enum RefreshResponse {
     /// This response occurs when a refresh has been sent but the time since
     /// last refresh has not passed.
     /// This response can occur when multiple requests to the refresher has
-    /// been sent concurrently, only the first received request will receive
-    /// respond with RefreshPerformed.
+    /// been sent concurrently, only the first received request will receive a
+    /// response with RefreshPerformed.
     ProviderVersionNotStale,
 }
 
@@ -45,12 +46,22 @@ pub(crate) async fn refresher(
 ) {
     let mut last_refresh = HashMap::new();
     while let Some(message) = rx.recv().await {
-        let span = info_span!("refresh_request", provider = ?message.provider);
+        // Set up tracing span relationship based one whether a response is expected.
+        let span;
+        if message.response_channel.is_some() {
+            span =
+                info_span!(parent: message.span, "refresh_request", provider = ?message.provider );
+        } else {
+            span = info_span!("refresh_request", provider = ?message.provider );
+            span.follows_from(message.span);
+        }
+
         async {
             tracing::debug!("Received refresh request");
             let provider = message.provider;
             let response_channel = message.response_channel;
             let last_refreshed_entry = last_refresh.entry(provider);
+
             match last_refreshed_entry {
                 Entry::Vacant(v) => {
                     tracing::info!(
@@ -65,7 +76,9 @@ pub(crate) async fn refresher(
                         key.provider_type.as_str(),
                     )
                     .await;
-                    v.insert(Instant::now());
+                    if result.is_ok() {
+                        v.insert(Instant::now());
+                    }
                     if let Some(sender) = response_channel {
                         let result = sender.send(RefreshResponse::RefreshPerformed(result));
                         if let Err(e) = result {
@@ -84,6 +97,7 @@ pub(crate) async fn refresher(
                         key.provider_type.as_str(),
                     )
                     .await;
+                    // If an error occurs here, it isn't critical, just leave it for a bit
                     o.insert(Instant::now());
                     if let Some(sender) = response_channel {
                         let result = sender.send(RefreshResponse::RefreshPerformed(result));

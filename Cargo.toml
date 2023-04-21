@@ -20,7 +20,7 @@ serde = { version = "1.0.152", features = ["serde_derive"] }
 serde_json = "1.0.93"
 thiserror = "1.0.38"
 tower = "0.4.13"
-tower-http = { version = "0.3.5", features = ["tracing", "trace", "metrics"] }
+tower-http = { version = "0.3.5", features = ["tracing", "trace", "metrics", "util"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter", "json", "tracing-log"] }
 url = { version = "^2.3.1", features = ["serde"] }
@@ -38,4 +38,4 @@ humantime = "2.1.0"
 rustflags = ["--cfg", "tokio_unstable"]
 
 [profile.release]
-debug=true
+debug=1

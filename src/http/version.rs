@@ -1,15 +1,15 @@
+use crate::app::AppState;
+use axum::{
+    extract::{Path, State},
+    response::{IntoResponse, Response},
+};
 use http::{header::CONTENT_TYPE, HeaderMap, HeaderValue};
+use hyper::StatusCode;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::collections::HashMap;
 use tokio_stream::StreamExt;
 use url::Url;
-use axum::{
-    extract::{Path, State},
-    response::{IntoResponse, Response},
-};
-use hyper::StatusCode;
-use crate::app::AppState;
 
 #[derive(Serialize)]
 struct MirrorVersions {
@@ -91,7 +91,10 @@ pub(crate) async fn version_handler<'a>(
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
         }
     };
-    Ok(MirrorVersion::build(downloads, args.http_redirect_url.as_str()))
+    Ok(MirrorVersion::build(
+        downloads,
+        args.http_redirect_url.as_str(),
+    ))
 }
 
 struct DatabaseDownloadResult {

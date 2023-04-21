@@ -67,7 +67,7 @@ impl RegistryClient {
         hostname: &str,
         path: &str,
     ) -> Result<A, TerrashineError> {
-        let hostname = hostname.as_ref();
+        let hostname = hostname;
         let services = self.discover_services(hostname).await?;
         if let Some(base_url) = services.providers_v1 {
             let url = format!("https://{hostname}{base_url}{path}");

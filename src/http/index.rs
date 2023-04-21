@@ -19,6 +19,7 @@ use sqlx::PgPool;
 use std::collections::HashMap;
 use std::{fmt::Debug, time::Duration};
 use tokio::sync::{mpsc::error::SendTimeoutError, oneshot};
+use tracing::Span;
 
 #[derive(Serialize, Debug)]
 pub(crate) struct MirrorIndex {
@@ -69,6 +70,7 @@ pub(crate) async fn index_handler(
             let result = tx.try_send(RefreshRequest {
                 provider,
                 response_channel: None,
+                span: Span::current(),
             });
             // We don't care if it errors in this path, log and continue on.
             if let Err(e) = result {
@@ -105,6 +107,7 @@ pub(crate) async fn index_handler(
         RefreshRequest {
             provider: provider.clone(),
             response_channel: Some(resp_tx),
+            span: Span::current(),
         },
         Duration::from_secs(1),
     )
@@ -130,7 +133,7 @@ pub(crate) async fn index_handler(
             Err(err)
         }
         Ok(RefreshResponse::ProviderVersionNotStale) => {
-            let err = TerrashineError::ConcurrentUpstreamProviderFetch { provider };
+            let err = TerrashineError::ConcurrentProviderFetch { provider };
             tracing::error!(reason=%err, "Concurrent upstream fetch occurred while fetching provider from upstream");
             Err(err)
         }
@@ -152,7 +155,7 @@ pub(crate) async fn refresh_versions(
     provider_type: &str,
 ) -> Result<ProviderVersions, TerrashineError> {
     let provider_versions = registry
-        .provider_get(&hostname, &format!("{namespace}/{provider_type}/versions"))
+        .provider_get(hostname, &format!("{namespace}/{provider_type}/versions"))
         .await?;
 
     store_provider_versions(db, hostname, namespace, provider_type, &provider_versions).await?;
