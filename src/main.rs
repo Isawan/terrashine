@@ -18,7 +18,11 @@ use std::{
     str::FromStr,
     time::Duration,
 };
-use tokio::sync::mpsc;
+use tokio::{
+    select,
+    signal::{self, unix::SignalKind},
+    sync::mpsc,
+};
 use tracing::{error, log::LevelFilter};
 use tracing_subscriber::EnvFilter;
 use url::Url;
@@ -163,8 +167,15 @@ async fn main() {
 
     let server = axum::Server::bind(&args.http_listen).serve(app.into_make_service());
     tracing::info!("Started server");
-    if let Err(error) = server.await {
-        tracing::error!(reason=?error, "HTTP service failed");
+    tokio::spawn(server);
+
+    // TODO: Handle cancellation properly rather than dropping everything
+    let mut sigterm = tokio::signal::unix::signal(SignalKind::terminate()).unwrap();
+    let mut sigint = tokio::signal::unix::signal(SignalKind::interrupt()).unwrap();
+    select! {
+        _ = sigterm.recv() => tracing::info!("Received SIGTERM"),
+        _ = sigint.recv() => tracing::info!("Received SIGINT"),
     }
+
     tracing::info!("Terminating server");
 }
