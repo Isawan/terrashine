@@ -7,6 +7,7 @@ about = "Terraform mirroring proxy"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+
 [dependencies]
 anyhow = "^1.0.69"
 aws-sdk-s3 = {version="^0.25.0"}
@@ -34,7 +35,8 @@ humantime = "2.1.0"
 
 [dev-dependencies]
 nix = "0.26.2"
-testcontainers = "0.14.0"
+rand = "0.8.5"
+testcontainers = { version = "0.14.0", features = ["experimental"]}
 
 [build]
 rustflags = ["--cfg", "tokio_unstable"]

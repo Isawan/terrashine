@@ -1,0 +1,33 @@
+version: "3.9"
+services:
+
+  postgres:
+    image: docker.io/library/postgres:15-alpine
+    ports:
+      - "5432:5432"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    environment:
+      POSTGRES_PASSWORD: password
+
+  minio:
+    image: quay.io/minio/minio:latest
+    command: [
+      "server", "/data","--console-address",
+      ":9001" 
+    ]
+    ports:
+      - "9001:9001"
+      - "9000:9000"
+      # Hack to make podman-compose 0.11 work since they're in the same "pod".
+      - "5432:5432" 
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  terrashine:
+    image: docker.io/library/rust
+    build:
+      context: .
+      dockerfile: Dockerfile
