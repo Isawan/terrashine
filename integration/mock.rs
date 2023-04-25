@@ -1,31 +1,21 @@
-mod common;
-use common::images::postgres::Postgres;
 use nix::{
     sys::signal::{kill, Signal},
     unistd::Pid,
 };
-use sqlx::PgPool;
 use std::{env, process::Stdio};
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
     process::Command,
 };
 
-
-#[sqlx::test]
-async fn test_binary_able_to_start_up() {
+pub(crate) async fn test_binary_able_to_start_up() {
     let terrashine_bin = env!("CARGO_BIN_EXE_terrashine");
-    let options = db.connect_options();
 
     let mut child = Command::new(terrashine_bin)
         .env("RUST_LOG", "info")
         .arg("--s3-bucket-name=terrashine")
         .arg("--s3-endpoint=http://localhost:9000")
         .arg("--http-redirect-url=https://localhost:9443/")
-        .env(
-            "TERRASHINE_DATABASE_URL",
-            format!("postgresql://postgres:{}@{}:{}/{}", option.),
-        )
         .stderr(Stdio::piped())
         .stdout(Stdio::piped())
         .kill_on_drop(true)
