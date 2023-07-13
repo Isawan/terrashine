@@ -5,31 +5,34 @@ use axum::{
 };
 use http::{header::CONTENT_TYPE, HeaderMap, HeaderValue};
 use hyper::StatusCode;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use sqlx::PgPool;
 use std::collections::HashMap;
 use tokio_stream::StreamExt;
-use url::Url;
 
-#[derive(Serialize)]
-struct MirrorVersions {
-    archives: HashMap<String, MirrorDownloadDetail>,
-}
+use super::response_types::{MirrorVersion, TargetPlatformIdentifier};
 
-#[derive(Serialize)]
-struct MirrorDownloadDetail {
-    url: Url,
-    hashes: Option<Vec<String>>,
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct MirrorVersion {
-    archives: HashMap<String, TargetPlatformIdentifier>,
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-struct TargetPlatformIdentifier {
-    url: String,
+pub(crate) async fn version_handler<'a>(
+    State(AppState {
+        db_client: db,
+        args,
+        ..
+    }): State<AppState>,
+    Path((hostname, namespace, provider_type, version)): Path<(String, String, String, Version)>,
+) -> Result<MirrorVersion, StatusCode> {
+    let downloads_result =
+        list_downloads(&db, &hostname, &namespace, &provider_type, version.prefix()).await;
+    let downloads = match downloads_result {
+        Ok(d) => d,
+        Err(e) => {
+            tracing::error!(reason=?e,"Error occured querying database");
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
+    Ok(MirrorVersion::build(
+        downloads,
+        args.http_redirect_url.as_str(),
+    ))
 }
 
 #[derive(Debug, Deserialize)]
@@ -72,29 +75,6 @@ fn build_url(base_url: String, id: i64) -> String {
     s.push_str("artifacts/");
     s.push_str(&id.to_string());
     s
-}
-
-pub(crate) async fn version_handler<'a>(
-    State(AppState {
-        db_client: db,
-        args,
-        ..
-    }): State<AppState>,
-    Path((hostname, namespace, provider_type, version)): Path<(String, String, String, Version)>,
-) -> Result<MirrorVersion, StatusCode> {
-    let downloads_result =
-        list_downloads(&db, &hostname, &namespace, &provider_type, version.prefix()).await;
-    let downloads = match downloads_result {
-        Ok(d) => d,
-        Err(e) => {
-            tracing::error!(reason=?e,"Error occured querying database");
-            return Err(StatusCode::INTERNAL_SERVER_ERROR);
-        }
-    };
-    Ok(MirrorVersion::build(
-        downloads,
-        args.http_redirect_url.as_str(),
-    ))
 }
 
 struct DatabaseDownloadResult {

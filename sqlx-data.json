@@ -75,43 +75,6 @@
     },
     "query": "\n        select\n            \"terraform_provider_version\".\"id\" as \"version_id\",\n            \"hostname\",\n            \"namespace\",\n            \"type\" as \"provider_type\",\n            \"version\",\n            \"os\",\n            \"arch\",\n            \"artifact_id\"\n        from \"terraform_provider_version\"\n        inner join \"terraform_provider\"\n            on \"terraform_provider_version\".\"provider_id\" = \"terraform_provider\".\"id\"\n            where \"terraform_provider_version\".\"id\" = $1;\n        "
   },
-  "4d83498875463a9711527f31f52c11df71ebe44aab31918fe8e07bba993888bd": {
-    "describe": {
-      "columns": [
-        {
-          "name": "version",
-          "ordinal": 0,
-          "type_info": "Text"
-        },
-        {
-          "name": "os",
-          "ordinal": 1,
-          "type_info": "Text"
-        },
-        {
-          "name": "arch",
-          "ordinal": 2,
-          "type_info": "Text"
-        }
-      ],
-      "nullable": [
-        false,
-        false,
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "TextArray",
-          "TextArray",
-          "TextArray",
-          "Text",
-          "Text",
-          "Text"
-        ]
-      }
-    },
-    "query": "\n        insert into \"terraform_provider_version\"\n            (\"version\", \"os\", \"arch\", \"provider_id\", \"artifact_id\")\n            select \"t1\".\"hostname\", \"t1\".\"namespace\", \"t1\".\"type\", \"t2\".\"id\", null from\n                (select * from unnest($1::text[], $2::text[], $3::text[]))\n                    as \"t1\"(\"hostname\", \"namespace\", \"type\")\n                cross join\n                (select \"id\" from \"terraform_provider\"\n                    where \"hostname\" = $4\n                        and \"namespace\" = $5\n                        and \"type\" = $6 limit 1) as t2\n            on conflict do nothing\n            returning \n            \"version\", \"os\", \"arch\";\n        "
-  },
   "63c5f7ebe8b39e48adf5d361493ce8b0140dedc7a8813a9749887a7fe49de8f6": {
     "describe": {
       "columns": [
@@ -186,6 +149,43 @@
       }
     },
     "query": "\n        select \"terraform_provider_version\".\"id\", \"os\", \"arch\"\n        from \"terraform_provider_version\"\n        inner join \"terraform_provider\" on \n            \"terraform_provider_version\".\"provider_id\" = \"terraform_provider\".\"id\"\n        where\n            \"terraform_provider_version\".\"version\" = $1\n            and \"terraform_provider\".\"hostname\" = $2\n            and \"terraform_provider\".\"namespace\" = $3\n            and \"terraform_provider\".\"type\" = $4;\n        "
+  },
+  "93bcbc1a74efa2a88f138e9bd0f556e33c2565c0f3b9999b2dfa2b634d688f5d": {
+    "describe": {
+      "columns": [
+        {
+          "name": "version",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "os",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "arch",
+          "ordinal": 2,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray",
+          "TextArray",
+          "TextArray",
+          "Text",
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        insert into \"terraform_provider_version\"\n            (\"version\", \"os\", \"arch\", \"provider_id\", \"artifact_id\")\n            select \"t1\".\"hostname\", \"t1\".\"namespace\", \"t1\".\"type\", \"t2\".\"id\", null from\n                (select * from unnest($1::text[], $2::text[], $3::text[]))\n                    as \"t1\" (\"hostname\", \"namespace\", \"type\")\n                cross join\n                (select \"id\" from \"terraform_provider\"\n                    where \"hostname\" = $4\n                        and \"namespace\" = $5\n                        and \"type\" = $6 limit 1) as t2\n            on conflict do nothing\n            returning \n            \"version\", \"os\", \"arch\";\n        "
   },
   "d38aeecd89d9ee7e76b5cd18b0059857802f5a4485a9bad209f3a9d42be7dfe0": {
     "describe": {

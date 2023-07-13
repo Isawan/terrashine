@@ -37,6 +37,7 @@ aws-config = { version = "0.55.0", features = ["native-tls"] }
 aws-endpoint = "0.55.0"
 futures = "0.3.28"
 humantime = "2.1.0"
+tokio-test = "0.4.2"
 
 [dev-dependencies]
 nix = "0.26.2"

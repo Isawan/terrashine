@@ -14,43 +14,13 @@ use http::{
     HeaderValue,
 };
 use hyper::HeaderMap;
-use serde::Serialize;
 use sqlx::PgPool;
 use std::collections::HashMap;
 use std::{fmt::Debug, time::Duration};
 use tokio::sync::{mpsc::error::SendTimeoutError, oneshot};
 use tracing::Span;
 
-#[derive(Serialize, Debug)]
-pub(crate) struct MirrorIndex {
-    // TODO: the nested hash value is always empty, we should implement
-    // custom serialize to avoid unneeded work.
-    versions: HashMap<String, HashMap<String, String>>,
-}
-
-impl IntoResponse for MirrorIndex {
-    fn into_response(self) -> Response {
-        let mut headers = HeaderMap::new();
-        headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-        // This is safe to cache as it is the first endpoint hit by the client
-        // as part of the terraform mirror provider protocol.
-        // This plus the fact that the providers are never deleted,
-        // ensures that the client behaves correctly if the cached entry is stale
-        // as subsequent requests to endpoint will exist.
-        headers.insert(
-            CACHE_CONTROL,
-            HeaderValue::from_static("public, max-age=60"),
-        );
-        let response = match serde_json::to_string(&self) {
-            Ok(r) => r,
-            Err(e) => {
-                tracing::error!(reason = ?e, "Could not serialize MirrorIndex");
-                panic!();
-            }
-        };
-        (headers, response).into_response()
-    }
-}
+use super::response_types::MirrorIndex;
 
 pub(crate) async fn index_handler(
     State(AppState {
@@ -93,7 +63,7 @@ pub(crate) async fn index_handler(
     // We do this by sending a message to the refresher channel and then wait for a
     // message back via the oneshot channel to confirm provider has been refreshed.
     // This path only occurs when a brand new provider index is first encountered.
-    // The refresher handles updating known terraform provider versions.
+    // The refresher handles on going updates of known terraform provider versions.
     let (resp_tx, resp_rx) = oneshot::channel();
 
     let provider = TerraformProvider {
@@ -129,7 +99,7 @@ pub(crate) async fn index_handler(
     match resp_rx.await {
         Ok(RefreshResponse::RefreshPerformed(Ok(versions))) => Ok(MirrorIndex::from(versions)),
         Ok(RefreshResponse::RefreshPerformed(Err(err))) => {
-            tracing::error!(reason=%err, "Occurred occurred while adding new provider from upstream");
+            tracing::error!(reason=%err, "Error occurred while adding new provider from upstream");
             Err(err)
         }
         Ok(RefreshResponse::ProviderVersionNotStale) => {
@@ -169,9 +139,6 @@ async fn list_provider_versions(
     namespace: &str,
     provider_type: &str,
 ) -> Result<Option<MirrorIndex>, TerrashineError> {
-    let mut result = vec![];
-    let mut row_count = 0;
-
     let query = sqlx::query!(
         r#"
         select "version" as "version?" from "terraform_provider_version"
@@ -188,18 +155,16 @@ async fn list_provider_versions(
 
     let rows = query.fetch_all(db).await?;
 
-    for row in rows.into_iter() {
-        row_count += 1;
-        if let Some(version) = row.version {
-            result.push(version);
-        } else {
-            return Ok(Some(result.into()));
-        }
+    match rows.as_slice() {
+        &[] => Ok(None),
+        &[..] => Ok(Some(
+            rows.into_iter()
+                .map(|row| row.version)
+                .collect::<Option<Vec<String>>>()
+                .unwrap_or_else(|| vec![])
+                .into(),
+        )),
     }
-    if row_count == 0 {
-        return Ok(None);
-    }
-    Ok(Some(result.into()))
 }
 
 async fn store_provider_versions(
@@ -255,7 +220,7 @@ async fn store_provider_versions(
             ("version", "os", "arch", "provider_id", "artifact_id")
             select "t1"."hostname", "t1"."namespace", "t1"."type", "t2"."id", null from
                 (select * from unnest($1::text[], $2::text[], $3::text[]))
-                    as "t1"("hostname", "namespace", "type")
+                    as "t1" ("hostname", "namespace", "type")
                 cross join
                 (select "id" from "terraform_provider"
                     where "hostname" = $4
@@ -305,5 +270,29 @@ impl From<Vec<String>> for MirrorIndex {
         MirrorIndex {
             versions: version_maps,
         }
+    }
+}
+
+impl IntoResponse for MirrorIndex {
+    fn into_response(self) -> Response {
+        let mut headers = HeaderMap::new();
+        headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+        // This is safe to cache as it is the first endpoint hit by the client
+        // as part of the terraform mirror provider protocol.
+        // This plus the fact that the providers are never deleted/ids reused,
+        // ensures that the client behaves correctly if the cached entry is stale
+        // as subsequent requests to endpoint will never update.
+        headers.insert(
+            CACHE_CONTROL,
+            HeaderValue::from_static("public, max-age=60"),
+        );
+        let response = match serde_json::to_string(&self) {
+            Ok(r) => r,
+            Err(e) => {
+                tracing::error!(reason = ?e, "Could not serialize MirrorIndex");
+                panic!();
+            }
+        };
+        (headers, response).into_response()
     }
 }
