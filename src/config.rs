@@ -76,4 +76,18 @@ pub(crate) struct Args {
     /// The clock is not persisted across application restarts.
     #[arg(long, value_parser = parse_humantime, default_value = "3600s", env = "TERRASHINE_REFRESH_INTERVAL")]
     pub(crate) refresh_interval: Duration,
+
+    /// Upstream terraform registry port
+    ///
+    /// This is used to construct the default registry URL for upstream requests.
+    /// This should only ever be used for testing purposes where the upstream registry
+    /// is not listening on the default port.
+    /// This should basically never be used in outside of a development or testing environment.
+    #[arg(
+        long,
+        env = "TERRASHINE_UPSTREAM_REGISTRY_PORT",
+        default_value = "443",
+        hide = true
+    )]
+    pub(crate) upstream_registry_port: u16,
 }

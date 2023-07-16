@@ -36,7 +36,6 @@ cert = x509.CertificateBuilder().subject_name(
     datetime.utcnow() + timedelta(days=10)
 ).add_extension(
     x509.SubjectAlternativeName([x509.DNSName(u"localhost")]),
-    x509.SubjectAlternativeName([x509.DNSName(u"localhost")]),
     critical=False,
 # Sign our certificate with our private key
 ).sign(key, hashes.SHA256())

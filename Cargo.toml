@@ -38,6 +38,7 @@ aws-endpoint = "0.55.0"
 futures = "0.3.28"
 humantime = "2.1.0"
 tokio-test = "0.4.2"
+tokio-util = "0.7.8"
 
 [dev-dependencies]
 nix = "0.26.2"
