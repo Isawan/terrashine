@@ -14,4 +14,7 @@ docs/book
 *.key
 *.pem
 
+.metals
+.vscode
+
 **/.terraform/

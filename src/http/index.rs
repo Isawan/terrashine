@@ -199,7 +199,7 @@ async fn store_provider_versions(
         &namespace[..],
         &provider_type[..]
     );
-    let rows = query.execute(&mut transaction).await?;
+    let rows = query.execute(&mut *transaction).await?;
     if rows.rows_affected() > 0 {
         tracing::debug!(
             %hostname,
@@ -238,7 +238,7 @@ async fn store_provider_versions(
         &provider_type[..],
     );
 
-    let records = query.fetch_all(&mut transaction).await?;
+    let records = query.fetch_all(&mut *transaction).await?;
 
     tracing::debug!(?records, "Saving new provider versions to database");
     transaction.commit().await?;

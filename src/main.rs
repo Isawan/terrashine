@@ -6,7 +6,6 @@ mod refresh;
 mod registry;
 
 use app::AppState;
-use axum::{routing::IntoMakeService, Router};
 use clap::Parser;
 use config::Args;
 use futures::{channel::oneshot::Cancellation, Future};
@@ -16,7 +15,7 @@ use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions},
     ConnectOptions,
 };
-use std::{process::exit, str::FromStr, time::Duration};
+use std::{str::FromStr, time::Duration};
 use tokio::{select, signal::unix::SignalKind, sync::mpsc, task};
 use tokio_test::task::spawn;
 use tokio_util::sync::CancellationToken;
@@ -25,24 +24,50 @@ use tracing_subscriber::EnvFilter;
 
 use crate::{refresh::refresher, registry::RegistryClient};
 
-async fn serve(config: Args, cancel: CancellationToken) {
+async fn serve(config: Args, cancel: CancellationToken) -> Result<(), ()> {
     let cancel_token = CancellationToken::new();
-    let s3_config = aws_config::load_from_env().await;
-    let s3 = aws_sdk_s3::Client::new(&s3_config);
-    let db_options =
-        PgConnectOptions::from_str(&config.database_url).expect("Could not parse database URL");
-    let db = PgPoolOptions::new()
-        .max_connections(config.database_pool)
-        .connect_with(db_options)
-        .await
-        .expect("Could not initialize pool");
-    let http = Client::builder()
-        .connect_timeout(Duration::from_secs(10))
-        .timeout(Duration::from_secs(60))
-        .build()
-        .expect("Could not initialize http client");
 
     let (tx, rx) = mpsc::channel(10000);
+
+    // path style required for minio to work
+    // Set up AWS SDK
+    let aws_config = aws_config::from_env().load().await;
+    let mut s3_config = aws_sdk_s3::config::Builder::from(&aws_config).force_path_style(true);
+    if let Some(endpoint) = &config.s3_endpoint {
+        s3_config = s3_config.endpoint_url(endpoint.as_str());
+    }
+    let s3 = aws_sdk_s3::Client::from_conf(s3_config.build());
+
+    // Set up database connection
+    let mut db_options = PgConnectOptions::from_str(&config.database_url)
+        .expect("Could not parse database URL")
+        .log_statements(LevelFilter::Debug);
+
+    let db_result = PgPoolOptions::new()
+        .max_connections(config.database_pool)
+        .acquire_timeout(Duration::from_secs(10))
+        .connect_with(db_options)
+        .await;
+
+    let db = match db_result {
+        Ok(pool) => pool,
+        Err(error) => {
+            error!(reason = %error, "Could not initialize pool, exiting.");
+            return Err(());
+        }
+    };
+
+    // Set up HTTP pool
+    let http_builder = Client::builder()
+        .connect_timeout(Duration::from_secs(10))
+        .timeout(Duration::from_secs(60));
+    let http = match http_builder.build() {
+        Ok(client) => client,
+        Err(error) => {
+            error!(reason = %error, "Could not initialize http client, exiting.");
+            return Err(());
+        }
+    };
 
     let refresher_db = db.clone();
     let refresher_registry = RegistryClient::new(http.clone());
@@ -65,6 +90,7 @@ async fn serve(config: Args, cancel: CancellationToken) {
         _ = cancel_token.cancelled() => tracing::trace!("Cancellation requested"),
     }
     tracing::debug!("Shutting down server");
+    Ok(())
 }
 
 #[tokio::main]

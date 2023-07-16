@@ -3,6 +3,7 @@ services:
 
   postgres:
     image: docker.io/library/postgres:15-alpine
+    network_mode: host
     ports:
       - "5432:5432"
     deploy:
@@ -14,6 +15,7 @@ services:
   minio:
     image: quay.io/minio/minio:latest
     command: [ "server", "/data", "--console-address", ":9001" ]
+    network_mode: host
     ports:
       - "9001:9001"
       - "9000:9000"
