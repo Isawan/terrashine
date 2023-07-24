@@ -34,7 +34,7 @@ impl AppState {
             s3_client: s3,
             http_client: http.clone(),
             db_client: db,
-            registry_client: RegistryClient::new(http),
+            registry_client: RegistryClient::new(args.upstream_registry_port, http),
             args,
             refresher_tx,
         }

@@ -70,7 +70,7 @@ async fn serve(config: Args, cancel: CancellationToken) -> Result<(), ()> {
     };
 
     let refresher_db = db.clone();
-    let refresher_registry = RegistryClient::new(http.clone());
+    let refresher_registry = RegistryClient::new(config.upstream_registry_port, http.clone());
     let refresher = refresher(
         &refresher_db,
         &refresher_registry,

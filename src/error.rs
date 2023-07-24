@@ -30,6 +30,13 @@ pub enum TerrashineError {
     ConcurrentProviderFetch { provider: TerraformProvider },
     #[error("Too many requests in channel ({channel_name}) caused a timeout")]
     TooManyRequestsInChannel { channel_name: &'static str },
+    #[error("could not build provider URL with hostname={hostname}, port={port}, base_url={base_url}, path={path} ")]
+    ProviderGetBuildUrlFailure {
+        hostname: String,
+        port: u16,
+        base_url: String,
+        path: String,
+    },
     #[error("Broken refresher channel as the receiver has been dropped")]
     BrokenRefresherChannel,
     #[error(transparent)]
@@ -51,6 +58,7 @@ impl IntoResponse for TerrashineError {
             TerrashineError::ConcurrentProviderFetch { .. } => StatusCode::TOO_MANY_REQUESTS,
             TerrashineError::TooManyRequestsInChannel { .. } => StatusCode::INTERNAL_SERVER_ERROR,
             TerrashineError::BrokenRefresherChannel => StatusCode::INTERNAL_SERVER_ERROR,
+            TerrashineError::ProviderGetBuildUrlFailure { .. } => StatusCode::INTERNAL_SERVER_ERROR,
         }
         .into_response()
     }
