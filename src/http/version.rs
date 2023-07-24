@@ -126,7 +126,7 @@ async fn list_downloads(
         r#"
         select "terraform_provider_version"."id", "os", "arch"
         from "terraform_provider_version"
-        inner join "terraform_provider" on 
+        inner join "terraform_provider" on
             "terraform_provider_version"."provider_id" = "terraform_provider"."id"
         where
             "terraform_provider_version"."version" = $1

@@ -142,7 +142,7 @@ async fn list_provider_versions(
     let query = sqlx::query!(
         r#"
         select "version" as "version?" from "terraform_provider_version"
-        left join "terraform_provider" on 
+        left join "terraform_provider" on
             "terraform_provider_version"."provider_id" = "terraform_provider"."id"
             where "terraform_provider"."hostname" = $1
                 and "terraform_provider"."namespace" = $2
@@ -227,7 +227,7 @@ async fn store_provider_versions(
                         and "namespace" = $5
                         and "type" = $6 limit 1) as t2
             on conflict do nothing
-            returning 
+            returning
             "version", "os", "arch";
         "#,
         &versions[..],
