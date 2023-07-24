@@ -8,8 +8,6 @@ mod registry;
 use app::AppState;
 use clap::Parser;
 use config::Args;
-use futures::{channel::oneshot::Cancellation, Future};
-use hyper::{server::conn::AddrIncoming, Server};
 use reqwest::Client;
 use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions},
@@ -17,7 +15,6 @@ use sqlx::{
 };
 use std::{str::FromStr, time::Duration};
 use tokio::{select, signal::unix::SignalKind, sync::mpsc, task};
-use tokio_test::task::spawn;
 use tokio_util::sync::CancellationToken;
 use tracing::{error, log::LevelFilter};
 use tracing_subscriber::EnvFilter;
@@ -39,7 +36,7 @@ async fn serve(config: Args, cancel: CancellationToken) -> Result<(), ()> {
     let s3 = aws_sdk_s3::Client::from_conf(s3_config.build());
 
     // Set up database connection
-    let mut db_options = PgConnectOptions::from_str(&config.database_url)
+    let db_options = PgConnectOptions::from_str(&config.database_url)
         .expect("Could not parse database URL")
         .log_statements(LevelFilter::Debug);
 
