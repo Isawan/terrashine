@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        select \"version\" as \"version?\" from \"terraform_provider_version\"\n        left join \"terraform_provider\" on\n            \"terraform_provider_version\".\"provider_id\" = \"terraform_provider\".\"id\"\n            where \"terraform_provider\".\"hostname\" = $1\n                and \"terraform_provider\".\"namespace\" = $2\n                and \"terraform_provider\".\"type\" = $3;\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "version?",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "be84b0c6596000b5dffb863d17ac0999b2e54dcf9d7d1f0c5645aece20e3add3"
+}

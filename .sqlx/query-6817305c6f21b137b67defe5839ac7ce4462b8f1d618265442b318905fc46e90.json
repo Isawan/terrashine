@@ -1,0 +1,37 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        select \"terraform_provider_version\".\"id\", \"os\", \"arch\"\n        from \"terraform_provider_version\"\n        inner join \"terraform_provider\" on\n            \"terraform_provider_version\".\"provider_id\" = \"terraform_provider\".\"id\"\n        where\n            \"terraform_provider_version\".\"version\" = $1\n            and \"terraform_provider\".\"hostname\" = $2\n            and \"terraform_provider\".\"namespace\" = $3\n            and \"terraform_provider\".\"type\" = $4;\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "os",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "arch",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "6817305c6f21b137b67defe5839ac7ce4462b8f1d618265442b318905fc46e90"
+}

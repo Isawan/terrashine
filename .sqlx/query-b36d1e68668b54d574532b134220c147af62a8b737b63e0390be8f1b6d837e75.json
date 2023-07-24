@@ -1,0 +1,39 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        insert into \"terraform_provider_version\"\n            (\"version\", \"os\", \"arch\", \"provider_id\", \"artifact_id\")\n            select \"t1\".\"hostname\", \"t1\".\"namespace\", \"t1\".\"type\", \"t2\".\"id\", null from\n                (select * from unnest($1::text[], $2::text[], $3::text[]))\n                    as \"t1\" (\"hostname\", \"namespace\", \"type\")\n                cross join\n                (select \"id\" from \"terraform_provider\"\n                    where \"hostname\" = $4\n                        and \"namespace\" = $5\n                        and \"type\" = $6 limit 1) as t2\n            on conflict do nothing\n            returning\n            \"version\", \"os\", \"arch\";\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "version",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "os",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "arch",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "TextArray",
+        "TextArray",
+        "TextArray",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "b36d1e68668b54d574532b134220c147af62a8b737b63e0390be8f1b6d837e75"
+}

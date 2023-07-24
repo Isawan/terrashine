@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        insert into \"terraform_provider\"\n            (\"hostname\", \"namespace\", \"type\", \"last_refreshed\")\n        values ($1,$2,$3, now())\n        on conflict (\"hostname\", \"namespace\", \"type\")\n            do update set \"last_refreshed\" = \"excluded\".\"last_refreshed\"\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d38aeecd89d9ee7e76b5cd18b0059857802f5a4485a9bad209f3a9d42be7dfe0"
+}

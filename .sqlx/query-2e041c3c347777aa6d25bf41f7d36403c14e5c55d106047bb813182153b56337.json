@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            update \"terraform_provider_version\"\n            set \"artifact_id\" = $1,\n                \"artifact_timestamp\" = now()\n                where \"id\" = $2;\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2e041c3c347777aa6d25bf41f7d36403c14e5c55d106047bb813182153b56337"
+}

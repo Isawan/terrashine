@@ -1,0 +1,64 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        select\n            \"terraform_provider_version\".\"id\" as \"version_id\",\n            \"hostname\",\n            \"namespace\",\n            \"type\" as \"provider_type\",\n            \"version\",\n            \"os\",\n            \"arch\",\n            \"artifact_id\"\n        from \"terraform_provider_version\"\n        inner join \"terraform_provider\"\n            on \"terraform_provider_version\".\"provider_id\" = \"terraform_provider\".\"id\"\n            where \"terraform_provider_version\".\"id\" = $1;\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "version_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "hostname",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "namespace",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "provider_type",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "version",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "os",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "arch",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "artifact_id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "36c145aed2e637861368801a199a63645f062d8f8b21b173e08285674ff63685"
+}
