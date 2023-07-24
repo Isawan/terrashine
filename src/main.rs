@@ -76,7 +76,7 @@ async fn serve(config: Args, cancel: CancellationToken) -> Result<(), ()> {
         cancel.child_token(),
     );
 
-    let bind_addr = config.http_listen.clone();
+    let bind_addr = config.http_listen;
     let app = app::provider_mirror_app(AppState::new(config, s3, db, http, tx));
 
     let server = axum::Server::bind(&bind_addr).serve(app.into_make_service());

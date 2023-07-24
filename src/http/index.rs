@@ -155,13 +155,13 @@ async fn list_provider_versions(
 
     let rows = query.fetch_all(db).await?;
 
-    match rows.as_slice() {
-        &[] => Ok(None),
-        &[..] => Ok(Some(
+    match *rows.as_slice() {
+        [] => Ok(None),
+        [..] => Ok(Some(
             rows.into_iter()
                 .map(|row| row.version)
                 .collect::<Option<Vec<String>>>()
-                .unwrap_or_else(|| vec![])
+                .unwrap_or_default()
                 .into(),
         )),
     }

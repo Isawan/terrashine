@@ -82,7 +82,7 @@ impl RegistryClient {
                 .map_err(|_| TerrashineError::ProviderGetBuildUrlFailure {
                     hostname: hostname.to_string(),
                     port: self.port,
-                    base_url: base_url,
+                    base_url,
                     path: path.to_string(),
                 })?;
             let mut response_buffer = Vec::with_capacity(REGISTRY_METADATA_SIZE_MAX_BYTES);
