@@ -1,5 +1,6 @@
 use clap::{command, Parser};
 use lazy_static::lazy_static;
+use sqlx::postgres::PgConnectOptions;
 use std::{
     fmt::Debug,
     net::{IpAddr, Ipv6Addr, SocketAddr},
@@ -27,12 +28,12 @@ fn parse_humantime(s: &str) -> Result<Duration, anyhow::Error> {
 
 #[derive(Parser, Debug, Clone)]
 #[command(author, version, about, long_about = None)]
-pub(crate) struct Args {
+pub struct Args {
     /// Socket to listen on
     ///
     /// The host and port to bind the HTTP service
     #[arg(long, default_value_t = *DEFAULT_SOCKET, env = "TERRASHINE_HTTP_LISTEN")]
-    pub(crate) http_listen: SocketAddr,
+    pub http_listen: SocketAddr,
 
     /// URL for redirects, used for resolving relative URLs for redirects.
     ///
@@ -41,7 +42,7 @@ pub(crate) struct Args {
     /// NOTE: You must set up a TLS terminating reverse proxy in front of terrashine as
     /// terraform requires mirrors to be served over HTTPS.
     #[arg(long, value_parser = validate_redirect_url, env = "TERRASHINE_HTTP_REDIRECT_URL")]
-    pub(crate) http_redirect_url: Url,
+    pub http_redirect_url: Url,
 
     /// Database connection URI
     #[arg(
@@ -49,24 +50,24 @@ pub(crate) struct Args {
         default_value = "postgres://postgres:password@localhost/",
         env = "TERRASHINE_DATABASE_URL"
     )]
-    pub(crate) database_url: String,
+    pub database_url: PgConnectOptions,
 
     /// Number of database connections in pool
     #[arg(long, default_value_t = 5, env = "TERRASHINE_DATABASE_POOL")]
-    pub(crate) database_pool: u32,
+    pub database_pool: u32,
 
     /// S3 Bucket name
     ///
     /// Used to cache upstream artifacts
     #[arg(long, env = "TERRASHINE_S3_BUCKET_NAME")]
-    pub(crate) s3_bucket_name: String,
+    pub s3_bucket_name: String,
 
     /// Custom S3 Endpoint
     ///
     /// Used for S3 compatible interfaces such as minio or localstack.
     /// This is discovered automatically via AWS SDK if not defined.
     #[arg(long, env = "TERRASHINE_S3_ENDPOINT")]
-    pub(crate) s3_endpoint: Option<Url>,
+    pub s3_endpoint: Option<Url>,
 
     /// Refresh interval
     ///
@@ -75,7 +76,7 @@ pub(crate) struct Args {
     /// on this instance of the application.
     /// The clock is not persisted across application restarts.
     #[arg(long, value_parser = parse_humantime, default_value = "3600s", env = "TERRASHINE_REFRESH_INTERVAL")]
-    pub(crate) refresh_interval: Duration,
+    pub refresh_interval: Duration,
 
     /// Upstream terraform registry port
     ///
@@ -89,5 +90,5 @@ pub(crate) struct Args {
         default_value = "443",
         hide = true
     )]
-    pub(crate) upstream_registry_port: u16,
+    pub upstream_registry_port: u16,
 }

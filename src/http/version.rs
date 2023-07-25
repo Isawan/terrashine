@@ -15,7 +15,7 @@ use super::response_types::{MirrorVersion, TargetPlatformIdentifier};
 pub(crate) async fn version_handler<'a>(
     State(AppState {
         db_client: db,
-        args,
+        config: args,
         ..
     }): State<AppState>,
     Path((hostname, namespace, provider_type, version)): Path<(String, String, String, Version)>,

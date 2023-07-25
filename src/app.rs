@@ -8,8 +8,9 @@ use tower_http::{
 use tracing::Level;
 
 use crate::{
-    config::Args, http::artifacts::artifacts_handler, http::index::index_handler,
-    http::version::version_handler, refresh::RefreshRequest, registry::RegistryClient,
+    config::Args, http::artifacts::artifacts_handler, http::healthcheck::healthcheck_handler,
+    http::index::index_handler, http::version::version_handler, refresh::RefreshRequest,
+    registry::RegistryClient,
 };
 
 #[derive(Clone)]
@@ -18,13 +19,13 @@ pub(crate) struct AppState {
     pub(crate) http_client: reqwest::Client,
     pub(crate) db_client: Pool<Postgres>,
     pub(crate) registry_client: RegistryClient,
-    pub(crate) args: Args,
+    pub(crate) config: Args,
     pub(crate) refresher_tx: mpsc::Sender<RefreshRequest>,
 }
 
 impl AppState {
     pub(crate) fn new(
-        args: Args,
+        config: Args,
         s3: aws_sdk_s3::Client,
         db: Pool<Postgres>,
         http: reqwest::Client,
@@ -34,8 +35,8 @@ impl AppState {
             s3_client: s3,
             http_client: http.clone(),
             db_client: db,
-            registry_client: RegistryClient::new(args.upstream_registry_port, http),
-            args,
+            registry_client: RegistryClient::new(config.upstream_registry_port, http),
+            config,
             refresher_tx,
         }
     }
@@ -52,6 +53,7 @@ pub(crate) fn provider_mirror_app(state: AppState) -> Router {
             get(version_handler),
         )
         .route("/artifacts/:version_id", get(artifacts_handler))
+        .route("/healthcheck", get(healthcheck_handler))
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::new().level(Level::INFO))

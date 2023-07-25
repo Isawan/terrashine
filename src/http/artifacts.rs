@@ -58,7 +58,7 @@ pub(crate) async fn artifacts_handler(
         registry_client: registry,
         db_client: db,
         s3_client: s3,
-        args,
+        config: args,
         ..
     }): State<AppState>,
     Path(version_id): Path<i64>,
