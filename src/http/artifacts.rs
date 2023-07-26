@@ -75,6 +75,7 @@ pub(crate) async fn artifacts_handler(
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
         }
     };
+    tracing::debug!(?artifact_detail, "Artifact details found in database");
     let artifact = match artifact_detail.artifact_id {
         Some(id) => {
             tracing::debug!("Artifact already downloaded");
@@ -130,7 +131,7 @@ pub(crate) async fn artifacts_handler(
     Ok(response)
 }
 
-#[derive(sqlx::FromRow)]
+#[derive(Debug, sqlx::FromRow)]
 struct ArtifactDetails {
     version_id: i64,
     hostname: String,
@@ -239,7 +240,7 @@ async fn stash_artifact(
         .context("No upload id returned from endpoint")?;
     let mut upload_buffer = Vec::with_capacity(PREALLOCATED_BUFFER_BYTES);
     let mut upload_parts = Vec::new();
-    let mut part_number = 0;
+    let mut part_number = 1;
 
     loop {
         match stream.next().await {
@@ -249,6 +250,7 @@ async fn stash_artifact(
                     continue;
                 }
                 // Once enough of the buffer has filled up, make the upload
+                tracing::debug!(?part_number, ?key, ?upload_id, size = ?upload_buffer.len(), "Uploading S3 part");
                 let upload_part = s3
                     .upload_part()
                     .key(&key)
@@ -258,6 +260,7 @@ async fn stash_artifact(
                     .part_number(part_number)
                     .send()
                     .await?;
+                tracing::debug!(?part_number, ?key, ?upload_id, "S3 part upload complete");
                 upload_parts.push(
                     CompletedPart::builder()
                         .e_tag(upload_part.e_tag().context("No etag found on response")?)
@@ -293,6 +296,7 @@ async fn stash_artifact(
     }
     // Upload anything remaining in the buffer before stream completion
     if !upload_buffer.is_empty() {
+        tracing::debug!(?part_number, ?key, ?upload_id, size = ?upload_buffer.len(), "Uploading s3 part");
         let upload_part = s3
             .upload_part()
             .key(&key)
@@ -302,6 +306,7 @@ async fn stash_artifact(
             .part_number(part_number)
             .send()
             .await?;
+        tracing::debug!(?part_number, ?key, ?upload_id, "S3 part upload complete");
         upload_parts.push(
             CompletedPart::builder()
                 .e_tag(upload_part.e_tag().context("No etag found on response")?)
@@ -310,6 +315,12 @@ async fn stash_artifact(
         );
     }
     // Finalize upload
+    tracing::debug!(
+        ?upload_parts,
+        ?key,
+        ?upload_id,
+        "Completing s3 multipart upload"
+    );
     let completed_upload_request = CompletedMultipartUpload::builder()
         .set_parts(Some(upload_parts))
         .build();
