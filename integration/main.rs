@@ -49,6 +49,7 @@ fn test_server_startup(_: PoolOptions<Postgres>, db_options: PgConnectOptions) {
 }
 
 #[sqlx::test]
+#[traced_test]
 fn test_end_to_end_terraform_flow(_: PoolOptions<Postgres>, db_options: PgConnectOptions) {
     let config = Args {
         database_url: db_options,
