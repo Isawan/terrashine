@@ -4,8 +4,8 @@ services:
   postgres:
     image: docker.io/library/postgres:15-alpine
     network_mode: host
-    ports:
-      - "5432:5432"
+    # ports:
+    #   - "5432:5432"
     deploy:
       restart_policy:
         condition: on-failure
@@ -16,12 +16,32 @@ services:
     image: quay.io/minio/minio:latest
     command: [ "server", "/data", "--console-address", ":9001" ]
     network_mode: host
-    ports:
-      - "9001:9001"
-      - "9000:9000"
+    # ports:
+    #   - "9001:9001"
+    #   - "9000:9000"
     deploy:
       restart_policy:
         condition: on-failure
+
+  aws-cli:
+    depends_on:
+      - minio
+    image: docker.io/amazon/aws-cli
+    entrypoint: aws
+    network_mode: host
+    command:
+      [
+        "--endpoint-url",
+        "http://localhost:9000",
+        "s3api",
+        "create-bucket",
+        "--bucket",
+        "terrashine"
+      ]
+    environment:
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_DEFAULT_REGION: us-east-1
 
   nginx:
     image: docker.io/library/nginx
