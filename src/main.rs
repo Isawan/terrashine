@@ -13,14 +13,16 @@ async fn main() {
         .pretty()
         .init();
 
-    tracing::info!("Started server");
-
     let mut sigterm = tokio::signal::unix::signal(SignalKind::terminate()).unwrap();
     let mut sigint = tokio::signal::unix::signal(SignalKind::interrupt()).unwrap();
     let cancel = CancellationToken::new();
-    let (tx, _) = tokio::sync::oneshot::channel();
-    task::spawn(run(args, cancel.child_token(), tx));
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    let handle = task::spawn(run(args, cancel.child_token(), tx));
+    rx.await.unwrap();
+    tracing::info!("Server ready");
+
     select! {
+        _ = handle => tracing::info!("Server shutdown"),
         _ = sigterm.recv() => tracing::info!("Received SIGTERM"),
         _ = sigint.recv() => tracing::info!("Received SIGINT"),
     }

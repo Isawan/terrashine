@@ -29,8 +29,6 @@ pub async fn run(
     cancel: CancellationToken,
     startup: Sender<StartUpNotify>,
 ) -> Result<(), ()> {
-    let cancel_token = CancellationToken::new();
-
     let (tx, rx) = mpsc::channel(10000);
 
     // path style required for minio to work
@@ -89,11 +87,10 @@ pub async fn run(
         })
         .expect("Sender channel has already been used");
 
-    tracing::info!("Started server");
     select! {
         _ = server => (),
         _ = refresher => (),
-        _ = cancel_token.cancelled() => tracing::trace!("Cancellation requested"),
+        _ = cancel.cancelled() => tracing::trace!("Cancellation requested"),
     }
     tracing::debug!("Shutting down server");
     Ok(())
