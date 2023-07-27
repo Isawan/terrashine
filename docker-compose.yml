@@ -43,6 +43,15 @@ services:
       AWS_SECRET_ACCESS_KEY: minioadmin
       AWS_DEFAULT_REGION: us-east-1
 
+  generate-certificates:
+    build:
+      context: .
+      dockerfile: Dockerfile.certificate
+    volumes:
+      - source: ./resources/
+        target: /usr/src/app/resources/
+        type: bind
+
   nginx:
     image: docker.io/library/nginx
     network_mode: host

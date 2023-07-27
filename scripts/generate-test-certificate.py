@@ -32,7 +32,6 @@ cert = x509.CertificateBuilder().subject_name(
 ).not_valid_before(
     datetime.utcnow()
 ).not_valid_after(
-    # Our certificate will be valid for 10 days
     datetime.utcnow() + timedelta(days=10)
 ).add_extension(
     x509.SubjectAlternativeName([x509.DNSName(u"localhost")]),
@@ -49,3 +48,5 @@ with open("resources/test/nginx/localhost.pem", "wb") as f:
         format=serialization.PrivateFormat.TraditionalOpenSSL,
         encryption_algorithm=serialization.NoEncryption(),
     ))
+with open("resources/test/certs/localhost.pem", "wb") as f:
+    f.write(cert.public_bytes(serialization.Encoding.PEM))
