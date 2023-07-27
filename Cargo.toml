@@ -42,10 +42,6 @@ tokio-util = "0.7.8"
 axum-prometheus = "0.4.0"
 
 [dev-dependencies]
-rand = "0.8.5"
-testcontainers = { version = "0.14.0", features = ["experimental"]}
-libtest-mimic = "0.6.0"
-httpmock = "0.6.8"
 tracing-test = { version = "0.2.4", features = ["no-env-filter"] }
 
 [build]
