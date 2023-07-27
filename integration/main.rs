@@ -2,10 +2,9 @@ use std::{
     net::{IpAddr, Ipv6Addr, SocketAddr},
     process::Stdio,
     str::from_utf8,
-    time::{Duration, Instant},
+    time::Duration,
 };
 
-use httpmock::{Method::GET, MockServer};
 use reqwest::StatusCode;
 use sqlx::{pool::PoolOptions, postgres::PgConnectOptions, Postgres};
 use terrashine::{self, config::Args};
@@ -68,7 +67,7 @@ fn test_end_to_end_terraform_flow(_: PoolOptions<Postgres>, db_options: PgConnec
         cancellation_token.child_token(),
         tx,
     ));
-    let socket = rx.await.unwrap().bind_socket;
+    let _ = rx.await.unwrap().bind_socket;
     let mut terraform = tokio::process::Command::new("terraform");
     let process = terraform
         .arg("-chdir=resources/test/terraform/random-import-stack/")
