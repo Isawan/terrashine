@@ -1,0 +1,8 @@
+#!/bin/sh
+# Generate a self-signed certificate for testing purposes.
+create_dir=resources/test/certs
+openssl req -x509 -newkey rsa:2048 -keyout ${create_dir}/key.pem -out ${create_dir}/cert.pem -days 10 -nodes \
+    -subj '/CN=localhost' -sha256\
+    -addext "subjectAltName = DNS:localhost"
+
+cat ${create_dir}/cert.pem ${create_dir}/key.pem > ./resources/test/nginx/localhost.pem

@@ -44,12 +44,15 @@ services:
       AWS_DEFAULT_REGION: us-east-1
 
   generate-certificates:
-    build:
-      context: .
-      dockerfile: Dockerfile.certificate
+    image: docker.io/alpine/openssl
+    entrypoint: /mnt/scripts/generate-test-certificate
+    working_dir: /mnt/
     volumes:
       - source: ./resources/
-        target: /usr/src/app/resources/
+        target: /mnt/resources/
+        type: bind
+      - source: ./scripts/
+        target: /mnt/scripts/
         type: bind
 
   nginx:
@@ -60,6 +63,8 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+    depends_on:
+      - generate-certificates
   #terrashine:
   #  image: docker.io/library/rust
   #  build:

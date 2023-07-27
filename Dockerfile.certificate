@@ -1,6 +1,0 @@
-# Dockerfile to install dependencies for generating test certificates
-FROM docker.io/library/python:3.11
-WORKDIR /usr/src/app
-RUN pip install --no-cache-dir cryptography
-COPY scripts/generate-test-certificate.py scripts/generate-test-certificate.py
-CMD ["python3", "scripts/generate-test-certificate.py"]
