@@ -22,7 +22,7 @@ jobs:
     - name: Start containers
       run: docker-compose up -d
     - name: Install self signed certificate
-      run: sudo cp ./resources/test/certs/cert.pem /usr/local/share/ca-certificates/localhost.crt && sudo update-ca-certificates
+      run: find ./resources && sudo cp ./resources/test/certs/cert.pem /usr/local/share/ca-certificates/localhost.crt && sudo update-ca-certificates
     - name: Show containers
       run: docker-compose ps
     - name: Run tests
