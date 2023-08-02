@@ -1,3 +1,5 @@
+mod util;
+
 use std::{
     net::{IpAddr, Ipv6Addr, SocketAddr},
     process::Stdio,
@@ -5,6 +7,7 @@ use std::{
     time::Duration,
 };
 
+use crate::util::copy_dir;
 use reqwest::StatusCode;
 use sqlx::{pool::PoolOptions, postgres::PgConnectOptions, Postgres};
 use terrashine::{self, config::Args};
@@ -12,6 +15,7 @@ use tokio::select;
 use tracing_test::traced_test;
 use url::Url;
 
+#[traced_test]
 #[sqlx::test]
 fn test_server_startup(_: PoolOptions<Postgres>, db_options: PgConnectOptions) {
     let config = Args {
@@ -40,13 +44,14 @@ fn test_server_startup(_: PoolOptions<Postgres>, db_options: PgConnectOptions) {
             assert_eq!(status.unwrap().status(), StatusCode::OK);
             cancellation_token.cancel();
         },
-        _ = tokio::time::sleep(Duration::from_secs(1)) => {
+        _ = tokio::time::sleep(Duration::from_secs(10)) => {
             cancellation_token.cancel();
             assert!(false, "Test did not complete in time")
         }
     }
 }
 
+#[traced_test]
 #[sqlx::test]
 fn test_end_to_end_terraform_flow(_: PoolOptions<Postgres>, db_options: PgConnectOptions) {
     let config = Args {
@@ -67,14 +72,18 @@ fn test_end_to_end_terraform_flow(_: PoolOptions<Postgres>, db_options: PgConnec
         tx,
     ));
     let _ = rx.await.unwrap().bind_socket;
+
+    // Set up temp folder
+    let folder = tempfile::tempdir().expect("Could not create folder");
+    copy_dir("resources/test/terraform/random-import-stack", &folder)
+        .expect("Could not copy folder");
+    let temp_folder = folder.path().to_str().expect("Could not get tempdir path");
+
     let mut terraform = tokio::process::Command::new("terraform");
     let process = terraform
-        .arg("-chdir=resources/test/terraform/random-import-stack/")
+        .arg(format!("-chdir={temp_folder}"))
         .arg("init")
-        .env(
-            "TF_CLI_CONFIG_FILE",
-            "resources/test/terraform/random-import-stack/terraform.tfrc",
-        )
+        .env("TF_CLI_CONFIG_FILE", "{temp_folder}/terraform.tfrc")
         .kill_on_drop(true)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

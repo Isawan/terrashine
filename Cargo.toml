@@ -42,6 +42,7 @@ tokio-util = "0.7.8"
 axum-prometheus = "0.4.0"
 
 [dev-dependencies]
+tempfile = "3.7.0"
 tracing-test = { version = "0.2.4", features = ["no-env-filter"] }
 
 [build]
