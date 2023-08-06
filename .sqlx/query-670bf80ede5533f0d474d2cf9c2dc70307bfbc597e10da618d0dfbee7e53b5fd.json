@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            insert into \"terraform_registry_host\" (\"hostname\", \"auth_token\")\n            values ($1, $2)\n            on conflict (\"hostname\")\n                do update set \"auth_token\" = \"excluded\".\"auth_token\";\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "670bf80ede5533f0d474d2cf9c2dc70307bfbc597e10da618d0dfbee7e53b5fd"
+}
