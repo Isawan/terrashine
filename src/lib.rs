@@ -1,5 +1,6 @@
 mod app;
 pub mod config;
+pub mod credhelper;
 mod error;
 mod http;
 mod refresh;

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            delete from \"terraform_registry_host\" where \"hostname\" = $1;\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0324eb1156a631ca2eefac7cf0438f0b7e85d8ebe5f1864fa767deb8570e22e1"
+}

@@ -1,3 +1,4 @@
+mod credhelper;
 mod util;
 
 use std::{
