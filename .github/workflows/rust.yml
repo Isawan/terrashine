@@ -20,7 +20,7 @@ jobs:
     - name: Build
       run: cargo build --verbose
     - name: Start containers
-      run: docker-compose up -d
+      run: docker-compose up -d --wait
     - name: Install self signed certificate
       run: sudo cp ./resources/test/certs/cert.pem /usr/local/share/ca-certificates/localhost.crt && sudo update-ca-certificates
     - name: Show containers
