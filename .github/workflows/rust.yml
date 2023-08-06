@@ -20,9 +20,12 @@ jobs:
     - name: Build
       run: cargo build --verbose
     - name: Start containers
-      run: docker-compose up -d --wait
+      run: docker compose up -d
     - name: Install self signed certificate
-      run: sudo cp ./resources/test/certs/cert.pem /usr/local/share/ca-certificates/localhost.crt && sudo update-ca-certificates
+      run: |
+        until [ -f ./resources/test/certs/cert.pem ]; do sleep 1; done
+        sudo cp ./resources/test/certs/cert.pem /usr/local/share/ca-certificates/localhost.crt && sudo update-ca-certificates
+      timeout-minutes: 1
     - name: Show containers
       run: docker-compose ps
     - name: Run tests
