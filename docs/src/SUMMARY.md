@@ -1,6 +1,6 @@
 # Summary
 
 - [Introduction](./introduction.md)
-- [External Caching](./external-caching.md)
+- [Reverse proxy](./reverse-proxy.md)
 - [Mirror refreshing](./mirror-refreshing.md)
 - [Private Registry Authentication](./private-registry-authentication.md)
