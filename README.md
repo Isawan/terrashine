@@ -4,24 +4,26 @@
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/isawan/terrashine/rust.yml)
 
 A terraform provider mirror implemented as a caching proxy.
+Terrashine is a terraform provider mirror implementation that works by automatically caching dependencies as providers are requested.
 
-> **Warning**
-> This is still in early development
-> Database schema migrations are not yet stable across versions
+Use cases:
 
-## Installation
+* Avoid rate-limits when actively developing (github has a 60 request per hour rate limit)
+* Faster downloads of terraform providers, particularly in CI environments.
+* Ensuring that terraform providers don't disappear if the source has been deleted.
 
-## Usage
+## Documentation
+
+Terrashine is a compiled to a standalone binary making deployments easy.
+Documentation for usage, deployment and administration can be found [here](https://isawan.github.io/terrashine/).
 
 ## Support
 
-Raise any bugs or feature requests as tickets
-
-## Roadmap
+Raise any bugs or feature requests as tickets.
 
 ## Contributing
 
-Open to contributions!
+This is quite a new project so I'm very open to contributions!
 
 ## Authors and acknowledgment
 
