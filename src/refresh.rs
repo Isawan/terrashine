@@ -1,4 +1,5 @@
 use crate::{
+    credhelper::CredentialHelper,
     error::TerrashineError,
     http::index::refresh_versions,
     registry::{ProviderVersions, RegistryClient},
@@ -42,9 +43,9 @@ pub(crate) enum RefreshResponse {
     ProviderVersionNotStale,
 }
 
-pub(crate) async fn refresher(
+pub(crate) async fn refresher<T: CredentialHelper>(
     db: &PgPool,
-    registry: &RegistryClient,
+    registry: &RegistryClient<T>,
     mut rx: sync::mpsc::Receiver<RefreshRequest>,
     refresh_interval: Duration,
     cancel: CancellationToken,

@@ -1,5 +1,6 @@
 use crate::{
     app::AppState,
+    credhelper::CredentialHelper,
     error::TerrashineError,
     refresh::{RefreshRequest, RefreshResponse, TerraformProvider},
     registry::{ProviderPlatform, ProviderVersionItem, ProviderVersions, RegistryClient},
@@ -117,9 +118,9 @@ pub(crate) async fn index_handler(
     }
 }
 
-pub(crate) async fn refresh_versions(
+pub(crate) async fn refresh_versions<T: CredentialHelper>(
     db: &PgPool,
-    registry: &RegistryClient,
+    registry: &RegistryClient<T>,
     hostname: &str,
     namespace: &str,
     provider_type: &str,

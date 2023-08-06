@@ -18,7 +18,9 @@ use tokio::{
 use tokio_util::sync::CancellationToken;
 use tracing::error;
 
-use crate::{refresh::refresher, registry::RegistryClient};
+use crate::{
+    credhelper::database::DatabaseCredentials, refresh::refresher, registry::RegistryClient,
+};
 
 #[derive(Debug)]
 pub struct StartUpNotify {
@@ -68,7 +70,11 @@ pub async fn run(
     };
 
     let refresher_db = db.clone();
-    let refresher_registry = RegistryClient::new(config.upstream_registry_port, http.clone());
+    let refresher_registry = RegistryClient::new(
+        config.upstream_registry_port,
+        http.clone(),
+        DatabaseCredentials::new(db.clone()),
+    );
     let refresher = refresher(
         &refresher_db,
         &refresher_registry,

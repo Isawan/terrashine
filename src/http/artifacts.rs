@@ -1,5 +1,6 @@
 use crate::{
     app::AppState,
+    credhelper::CredentialHelper,
     registry::{ProviderResponse, RegistryClient},
 };
 use anyhow::Context;
@@ -192,9 +193,9 @@ async fn get_artifact_from_database(
     Ok(result)
 }
 
-async fn get_upstream(
+async fn get_upstream<T: CredentialHelper>(
     http: Client,
-    registry: RegistryClient,
+    registry: RegistryClient<T>,
     artifact: &ArtifactDetails,
 ) -> Result<Pin<Box<impl Stream<Item = reqwest::Result<Bytes>>>>, anyhow::Error> {
     let provider_path = format!(

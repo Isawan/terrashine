@@ -3,20 +3,25 @@ use serde::Deserialize;
 use std::str;
 use url::Url;
 
-use crate::error::TerrashineError;
+use crate::{credhelper::CredentialHelper, error::TerrashineError};
 
 const DISCOVERY_RESPONSE_SIZE_MAX_BYTES: usize = 16384; // 16KB
 const REGISTRY_METADATA_SIZE_MAX_BYTES: usize = 8388608; // 8MB
 
 #[derive(Clone)]
-pub struct RegistryClient {
+pub struct RegistryClient<T> {
     port: u16,
     http: Client,
+    credentials: T,
 }
 
-impl RegistryClient {
-    pub fn new(port: u16, http: Client) -> Self {
-        RegistryClient { port, http }
+impl<T> RegistryClient<T> {
+    pub fn new(port: u16, http: Client, credentials: T) -> Self {
+        RegistryClient {
+            port,
+            http,
+            credentials,
+        }
     }
 }
 
@@ -45,7 +50,7 @@ async fn read_body_limit(
     Ok(())
 }
 
-impl RegistryClient {
+impl<T: CredentialHelper> RegistryClient<T> {
     /// Performs request upstream to handle terraform service discovery protocol
     async fn discover_services(
         &self,
@@ -73,8 +78,9 @@ impl RegistryClient {
         hostname: &str,
         path: &str,
     ) -> Result<A, TerrashineError> {
-        let hostname = hostname;
         let services = self.discover_services(hostname).await?;
+        let auth_token = self.credentials.get(hostname).await?;
+
         if let Some(base_url) = services.providers_v1 {
             let url = Url::parse(&format!("https://{hostname}:{port}", port = self.port))
                 .and_then(|u| u.join(&base_url))
@@ -87,7 +93,12 @@ impl RegistryClient {
                 })?;
             let mut response_buffer = Vec::with_capacity(REGISTRY_METADATA_SIZE_MAX_BYTES);
             tracing::debug!(%url, "GET registry provider");
-            let response = self.http.get(url).send().await?.error_for_status()?;
+            let mut request = self.http.get(url);
+            if let Some(token) = auth_token {
+                request = request.bearer_auth(token);
+            }
+
+            let response = request.send().await?.error_for_status()?;
             read_body_limit(
                 &mut response_buffer,
                 response,
