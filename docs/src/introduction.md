@@ -18,7 +18,8 @@ The following components are required to run terrashine
 
 * PostgreSQL
 * S3-compatible object storage
+* TLS terminating reverse proxy (NGINX, HAProxy etc..)
 
 ## Notes
 
-[^1]: Terrashine implements [Provider Network Mirror Protocol](https://developer.hashicorp.com/terraform/internals/provider-network-mirror-protocol)
+[^1]: Terrashine implements the [Provider Network Mirror Protocol](https://developer.hashicorp.com/terraform/internals/provider-network-mirror-protocol)

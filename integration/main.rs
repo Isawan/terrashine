@@ -84,7 +84,10 @@ fn test_end_to_end_terraform_flow(_: PoolOptions<Postgres>, db_options: PgConnec
     let process = terraform
         .arg(format!("-chdir={temp_folder}"))
         .arg("init")
-        .env("TF_CLI_CONFIG_FILE", "{temp_folder}/terraform.tfrc")
+        .env(
+            "TF_CLI_CONFIG_FILE",
+            format!("{temp_folder}/terraform.tfrc"),
+        )
         .kill_on_drop(true)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
