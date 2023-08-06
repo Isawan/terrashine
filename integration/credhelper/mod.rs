@@ -30,7 +30,7 @@ async fn test_insert_credential_helper(pool: PgPool) {
 }
 
 #[sqlx::test]
-async fn test_insert_credential_helper_update_hostname(pool: Pool<Postgres>) {
+async fn test_insert_credential_helper_update_hostname(pool: PgPool) {
     let mut creds = DatabaseCredentials::new(pool);
     creds
         .store("terraform1.isawan.net".into(), "password1".into())
@@ -66,7 +66,7 @@ async fn test_insert_credential_helper_update_hostname(pool: Pool<Postgres>) {
 }
 
 #[sqlx::test]
-async fn test_forget_credential(pool: Pool<Postgres>) {
+async fn test_forget_credential(pool: PgPool) {
     let mut creds = DatabaseCredentials::new(pool);
     creds
         .store("terraform1.isawan.net".into(), "password1".into())
