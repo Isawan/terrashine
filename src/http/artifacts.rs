@@ -113,16 +113,23 @@ pub(crate) async fn artifacts_handler(
                 arch: artifact_detail.arch,
                 artifact_id: id,
             };
-            stash_artifact(&db, &s3, &args.s3_bucket_name, &artifact, body)
-                .await
-                .map_err(|e| {
-                    tracing::error!(reason = ?e, "Error occured stashing artifact");
-                    StatusCode::INTERNAL_SERVER_ERROR
-                })?;
+            stash_artifact(
+                &db,
+                &s3,
+                &args.s3_bucket_name,
+                &args.s3_bucket_prefix,
+                &artifact,
+                body,
+            )
+            .await
+            .map_err(|e| {
+                tracing::error!(reason = ?e, "Error occurred stashing artifact");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
             artifact
         }
     };
-    let req = presign_request(&s3, &args.s3_bucket_name, &artifact)
+    let req = presign_request(&s3, &args.s3_bucket_name, &args.s3_bucket_prefix, &artifact)
         .await
         .map_err(|e| {
             tracing::error!(reason = ?e, "Error presigning url");
@@ -158,8 +165,9 @@ struct Artifact {
 }
 
 impl Artifact {
-    fn to_s3_key(&self) -> String {
-        let mut key = String::from("artifacts/");
+    fn to_s3_key(&self, prefix: &str) -> String {
+        let mut key = String::from(prefix);
+        key.push_str("artifacts/");
         key.push_str(&self.artifact_id.to_string());
         key
     }
@@ -230,10 +238,11 @@ async fn stash_artifact(
     db: &PgPool,
     s3: &aws_sdk_s3::Client,
     bucket_name: &str,
+    bucket_prefix: &str,
     artifact: &Artifact,
     mut stream: Pin<Box<impl Stream<Item = reqwest::Result<Bytes>>>>,
 ) -> Result<(), anyhow::Error> {
-    let key = artifact.to_s3_key();
+    let key = artifact.to_s3_key(bucket_prefix);
     let req = s3.create_multipart_upload().bucket(bucket_name).key(&key);
     let multipart_upload = req.send().await?;
     let upload_id = multipart_upload
@@ -358,13 +367,14 @@ async fn store_artifact_in_database(db: &PgPool, artifact: &Artifact) -> Result<
 async fn presign_request(
     s3: &aws_sdk_s3::Client,
     bucket_name: &str,
+    bucket_prefix: &str,
     artifact: &Artifact,
 ) -> Result<Uri, anyhow::Error> {
     let expires_in = Duration::from_secs(120);
     let presigned_request = s3
         .get_object()
         .bucket(bucket_name)
-        .key(artifact.to_s3_key())
+        .key(artifact.to_s3_key(bucket_prefix))
         .presigned(PresigningConfig::expires_in(expires_in)?)
         .await?;
     Ok(presigned_request.uri().clone())

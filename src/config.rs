@@ -62,6 +62,12 @@ pub struct Args {
     #[arg(long, env = "TERRASHINE_S3_BUCKET_NAME")]
     pub s3_bucket_name: String,
 
+    /// S3 Bucket prefix
+    ///
+    /// Prefix for object keys
+    #[arg(long, default_value = "", env = "TERRASHINE_S3_BUCKET_PREFIX")]
+    pub s3_bucket_prefix: String,
+
     /// Custom S3 Endpoint
     ///
     /// Used for S3 compatible interfaces such as minio or localstack.

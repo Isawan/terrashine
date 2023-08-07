@@ -15,14 +15,17 @@ use terrashine::{self, config::Args};
 use tokio::select;
 use tracing_test::traced_test;
 use url::Url;
+use uuid::Uuid;
 
 #[traced_test]
 #[sqlx::test]
 fn test_server_startup(_: PoolOptions<Postgres>, db_options: PgConnectOptions) {
+    let prefix = format!("{}/", Uuid::new_v4());
     let config = Args {
         database_url: db_options,
         database_pool: 3,
         s3_bucket_name: "terrashine".to_string(),
+        s3_bucket_prefix: prefix,
         s3_endpoint: Some(Url::parse("http://localhost:9000").unwrap()),
         http_redirect_url: Url::parse("https://localhost:9443/").unwrap(),
         http_listen: SocketAddr::new(IpAddr::V6(Ipv6Addr::LOCALHOST), 0),
@@ -55,10 +58,12 @@ fn test_server_startup(_: PoolOptions<Postgres>, db_options: PgConnectOptions) {
 #[traced_test]
 #[sqlx::test]
 fn test_end_to_end_terraform_flow(_: PoolOptions<Postgres>, db_options: PgConnectOptions) {
+    let prefix = format!("{}/", Uuid::new_v4());
     let config = Args {
         database_url: db_options,
         database_pool: 3,
         s3_bucket_name: "terrashine".to_string(),
+        s3_bucket_prefix: prefix,
         s3_endpoint: Some(Url::parse("http://localhost:9000").unwrap()),
         http_redirect_url: Url::parse("https://localhost:9443/").unwrap(),
         http_listen: SocketAddr::new(IpAddr::V6(Ipv6Addr::LOCALHOST), 9543),
