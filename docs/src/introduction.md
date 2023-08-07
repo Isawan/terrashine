@@ -10,7 +10,13 @@ Use cases:
 
 ## Installation
 
-Terrashine is a rust binary. This is a project in early development, binaries are not currently published.
+Terrashine is a rust binary.
+This is a project in early development, binaries are not currently published.
+
+## High availability
+
+Multiple instances of terrashine can be deployed to support high availability.
+Simply point the instances at the same storage layer.
 
 ## Dependencies
 
