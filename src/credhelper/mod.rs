@@ -1,4 +1,5 @@
 pub mod database;
+pub mod memory;
 mod types;
 
 pub use types::Credential;

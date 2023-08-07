@@ -29,3 +29,35 @@ pub trait CredentialHelper: Sync {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::super::memory::MemoryCredentials;
+    use super::*;
+
+    #[tokio::test]
+    async fn test_request_transform() {
+        let mut creds = MemoryCredentials::new();
+        creds
+            .store("localhost".into(), "password1".into())
+            .await
+            .expect("Error occurred");
+        let client = reqwest::Client::new();
+        let request = client.get("http://localhost");
+        let request = creds
+            .transform(request, "localhost")
+            .await
+            .expect("Unexpected error")
+            .build()
+            .expect("Remove");
+        let auth_header = request
+            .headers()
+            .get("authorization")
+            .expect("Header not found");
+
+        assert_eq!(
+            auth_header, "Bearer password1",
+            "Authorization header not set"
+        );
+    }
+}
