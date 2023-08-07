@@ -3,7 +3,7 @@ use std::marker::Send;
 use async_trait::async_trait;
 use sqlx::PgPool;
 
-use super::CredentialHelper;
+use super::{types::Credential, CredentialHelper};
 
 // Credential helper implementation by storing in the database
 #[derive(Clone)]
@@ -19,7 +19,7 @@ impl DatabaseCredentials {
 
 #[async_trait]
 impl CredentialHelper for DatabaseCredentials {
-    async fn get(&self, hostname: impl AsRef<str> + Send) -> Result<Option<String>, anyhow::Error> {
+    async fn get(&self, hostname: impl AsRef<str> + Send) -> Result<Credential, anyhow::Error> {
         let query = sqlx::query!(
             r#"
             select auth_token from terraform_registry_host
@@ -28,7 +28,11 @@ impl CredentialHelper for DatabaseCredentials {
             hostname.as_ref()
         );
         let result = query.fetch_optional(&self.pool).await?;
-        Ok(result.and_then(|v| v.auth_token))
+        if let Some(row) = result {
+            Ok(Credential::Entry(row.auth_token))
+        } else {
+            Ok(Credential::NotFound)
+        }
     }
 
     async fn store(&mut self, hostname: String, cred: String) -> Result<(), anyhow::Error> {

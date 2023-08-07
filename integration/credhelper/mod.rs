@@ -1,6 +1,6 @@
 use sqlx::PgPool;
 use terrashine::credhelper::database::DatabaseCredentials;
-use terrashine::credhelper::CredentialHelper;
+use terrashine::credhelper::{Credential, CredentialHelper};
 
 #[sqlx::test]
 async fn test_insert_credential_helper(pool: PgPool) {
@@ -22,9 +22,8 @@ async fn test_insert_credential_helper(pool: PgPool) {
         creds
             .get("terraform2.isawan.net")
             .await
-            .expect("Error occured")
-            .expect("found empty value")
-            == "password2",
+            .expect("Error occurred")
+            == Credential::Entry(Some("password2".into())),
         "Unexpected value"
     );
 }
@@ -50,8 +49,7 @@ async fn test_insert_credential_helper_update_hostname(pool: PgPool) {
             .get("terraform1.isawan.net")
             .await
             .expect("Error occured")
-            .expect("found empty value")
-            == "password2",
+            == Credential::Entry(Some("password2".into())),
         "Value not updated"
     );
     assert!(
@@ -59,8 +57,7 @@ async fn test_insert_credential_helper_update_hostname(pool: PgPool) {
             .get("terraform2.isawan.net")
             .await
             .expect("Error occured")
-            .expect("found empty value")
-            == "password1",
+            == Credential::Entry(Some("password1".into())),
         "Unrelated row updated"
     );
 }
@@ -86,7 +83,7 @@ async fn test_forget_credential(pool: PgPool) {
             .get("terraform1.isawan.net")
             .await
             .expect("Error occured")
-            == None,
+            == Credential::NotFound,
         "Found value when expected deletion"
     );
     assert!(
@@ -94,8 +91,7 @@ async fn test_forget_credential(pool: PgPool) {
             .get("terraform2.isawan.net")
             .await
             .expect("Error occured")
-            .expect("found empty value")
-            == "password1",
+            != Credential::NotFound,
         "Delete unrelated row detected"
     );
 }

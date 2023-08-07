@@ -79,8 +79,6 @@ impl<T: CredentialHelper> RegistryClient<T> {
         path: &str,
     ) -> Result<A, TerrashineError> {
         let services = self.discover_services(hostname).await?;
-        let auth_token = self.credentials.get(hostname).await?;
-
         if let Some(base_url) = services.providers_v1 {
             let url = Url::parse(&format!("https://{hostname}:{port}", port = self.port))
                 .and_then(|u| u.join(&base_url))
@@ -93,10 +91,8 @@ impl<T: CredentialHelper> RegistryClient<T> {
                 })?;
             let mut response_buffer = Vec::with_capacity(REGISTRY_METADATA_SIZE_MAX_BYTES);
             tracing::debug!(%url, "GET registry provider");
-            let mut request = self.http.get(url);
-            if let Some(token) = auth_token {
-                request = request.bearer_auth(token);
-            }
+            let request = self.http.get(url);
+            let request = self.credentials.transform(request, hostname).await?;
 
             let response = request.send().await?.error_for_status()?;
             read_body_limit(
