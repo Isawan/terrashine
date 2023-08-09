@@ -10,16 +10,22 @@ Use cases:
 
 ## Installation
 
-Terrashine is a rust binary.
-This is a project in early development, binaries are not currently published.
+Terrashine is a deployed as a standalone binary.
+Binary releases for x86-64 are published can be found on the [releases](https://github.com/Isawan/terrashine/releases) page.
 
-The project can be built with the command:
+Alternatively, the project can be built from source with the following command:
 
 ```
 SQLX_OFFLINE=1 cargo build --release
 ```
 
 Once built, the binary can be found at `./target/release/terrashine`
+
+See the `--help` for more information:
+
+```
+./terrashine --help
+```
 
 ## High availability
 
