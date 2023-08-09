@@ -1,4 +1,3 @@
 #!/bin/sh
 
-cargo build --release
-
+SQLX_OFFLINE=1 cargo build --release --verbose

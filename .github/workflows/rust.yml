@@ -39,3 +39,13 @@ jobs:
     - name: Stop containers
       if: always()
       run: docker-compose down
+
+    - name: Build final release binary
+      if: github.ref == 'refs/heads/main'
+      run: ./scripts/release
+    - name: Upload artifact
+      if: github.ref == 'refs/heads/main'
+      uses: actions/upload-artifact@v3
+      with:
+        name: terrashine-binary
+        path: target/release/terrashine
