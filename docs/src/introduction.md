@@ -13,16 +13,18 @@ Use cases:
 Terrashine is a rust binary.
 This is a project in early development, binaries are not currently published.
 
+The project can be built with the command:
+
+```
+SQLX_OFFLINE=1 cargo build --release
+```
+
+Once built, the binary can be found at `./target/release/terrashine`
+
 ## High availability
 
 Multiple instances of terrashine can be deployed to support high availability.
 Simply point the instances at the same storage layer.
-
-The project can be built with the command:
-
-```
-SQLX_OFFLINE=1 cargo build
-```
 
 ## Dependencies
 
