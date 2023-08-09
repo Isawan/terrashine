@@ -12,6 +12,12 @@ Use cases:
 
 Terrashine is a rust binary. This is a project in early development, binaries are not currently published.
 
+The project can be built with the command:
+
+```
+SQLX_OFFLINE=1 cargo build
+```
+
 ## Dependencies
 
 The following components are required to run terrashine
