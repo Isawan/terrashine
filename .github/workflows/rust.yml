@@ -29,7 +29,7 @@ jobs:
         sudo cp ./resources/test/certs/cert.pem /usr/local/share/ca-certificates/localhost.crt && sudo update-ca-certificates
       timeout-minutes: 1
     - name: Show containers
-      run: docker-compose ps
+      run: docker compose ps
     - name: Run integration tests
       run: cargo test --verbose --test integration
       env:
@@ -38,7 +38,7 @@ jobs:
         AWS_REGION: us-east-1
     - name: Stop containers
       if: always()
-      run: docker-compose down
+      run: docker compose down
 
     - name: Build final release binary
       if: github.ref == 'refs/heads/main'
