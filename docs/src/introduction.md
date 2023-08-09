@@ -18,6 +18,12 @@ This is a project in early development, binaries are not currently published.
 Multiple instances of terrashine can be deployed to support high availability.
 Simply point the instances at the same storage layer.
 
+The project can be built with the command:
+
+```
+SQLX_OFFLINE=1 cargo build
+```
+
 ## Dependencies
 
 The following components are required to run terrashine

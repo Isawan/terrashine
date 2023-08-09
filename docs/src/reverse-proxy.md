@@ -1,6 +1,6 @@
 # Reverse proxy
 
-The Terraform mirror [Provider Network Mirror Protocol](https://developer.hashicorp.com/terraform/internals/provider-network-mirror-protocol) requires that the API request be performed over encrypted HTTPS.
+The terraform [provider network mirror protocol](https://developer.hashicorp.com/terraform/internals/provider-network-mirror-protocol) requires that the API request be performed over encrypted HTTPS.
 Terrashine itself does not currently perform TLS termination, a reverse proxy must always be deployed to perform this function for a working setup.
 
 ## External Caching
