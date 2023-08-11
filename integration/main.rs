@@ -36,6 +36,7 @@ fn test_server_startup(_: PoolOptions<Postgres>, db_options: PgConnectOptions) {
     let (tx, rx) = tokio::sync::oneshot::channel();
     let handle = tokio::spawn(terrashine::run(
         config,
+        None,
         cancellation_token.child_token(),
         tx,
     ));
@@ -74,6 +75,7 @@ fn test_end_to_end_terraform_flow(_: PoolOptions<Postgres>, db_options: PgConnec
     let (tx, rx) = tokio::sync::oneshot::channel();
     let handle = tokio::spawn(terrashine::run(
         config,
+        None,
         cancellation_token.child_token(),
         tx,
     ));

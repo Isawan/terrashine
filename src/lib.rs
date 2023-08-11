@@ -7,6 +7,7 @@ mod refresh;
 mod registry;
 
 use app::AppState;
+use axum_prometheus::metrics_exporter_prometheus::PrometheusHandle;
 use config::Args;
 use reqwest::Client;
 use sqlx::postgres::PgPoolOptions;
@@ -29,6 +30,7 @@ pub struct StartUpNotify {
 
 pub async fn run(
     config: Args,
+    metric_handle: Option<PrometheusHandle>,
     cancel: CancellationToken,
     startup: Sender<StartUpNotify>,
 ) -> Result<(), ()> {
@@ -84,7 +86,7 @@ pub async fn run(
     );
 
     let bind_addr = config.http_listen;
-    let app = app::provider_mirror_app(AppState::new(config, s3, db, http, tx));
+    let app = app::provider_mirror_app(AppState::new(config, s3, db, http, tx), metric_handle);
 
     let server = axum::Server::bind(&bind_addr).serve(app.into_make_service());
 

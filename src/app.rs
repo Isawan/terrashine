@@ -1,4 +1,7 @@
 use axum::{routing::get, Router};
+use axum_prometheus::{
+    metrics_exporter_prometheus::PrometheusHandle, PrometheusMetricLayerBuilder,
+};
 use sqlx::{Pool, Postgres};
 use tokio::sync::mpsc;
 use tower_http::{
@@ -46,7 +49,22 @@ impl AppState {
     }
 }
 
-pub(crate) fn provider_mirror_app(state: AppState) -> Router {
+pub(crate) fn provider_mirror_app(
+    state: AppState,
+    metric_handle: Option<PrometheusHandle>,
+) -> Router {
+    let metric_layer = PrometheusMetricLayerBuilder::new()
+        .with_group_patterns_as(
+            "/:hostname/:namespace/:provider_type/index.json",
+            &["/:hostname/:namespace/:provider_type/index.json"],
+        )
+        .with_group_patterns_as(
+            "/:hostname/:namespace/:provider_type/:version",
+            &["/:hostname/:namespace/:provider_type/:version"],
+        )
+        .with_group_patterns_as("/artifacts/:version_id", &["/artifacts/:version_id"])
+        .build();
+
     Router::new()
         .route(
             "/:hostname/:namespace/:provider_type/index.json",
@@ -58,6 +76,10 @@ pub(crate) fn provider_mirror_app(state: AppState) -> Router {
         )
         .route("/artifacts/:version_id", get(artifacts_handler))
         .route("/healthcheck", get(healthcheck_handler))
+        .route(
+            "/metrics",
+            get(|| async move { metric_handle.map_or("".to_string(), |x| x.render()) }),
+        )
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
@@ -68,5 +90,6 @@ pub(crate) fn provider_mirror_app(state: AppState) -> Router {
                         .latency_unit(LatencyUnit::Micros),
                 ),
         )
+        .layer(metric_layer)
         .with_state(state)
 }
