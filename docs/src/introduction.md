@@ -32,6 +32,12 @@ See the `--help` for more information:
 Multiple instances of terrashine can be deployed to support high availability.
 Simply point the instances at the same storage layer.
 
+## Metrics
+
+Terrashine supports the /metrics endpoint to export metrics in the prometheus format.
+This can be ingested via prometheus or any other monitoring tool that understands
+the prometheus exposition format.
+
 ## Dependencies
 
 The following components are required to run terrashine
