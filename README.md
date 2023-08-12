@@ -8,7 +8,7 @@ Terrashine is a terraform provider mirror implementation that works by automatic
 
 Use cases:
 
-* Avoid rate-limits when actively developing (github has a 60 request per hour rate limit)
+* Avoid rate-limits when actively developing in ephemeral CI environments (github has a 60 request per hour rate limit)
 * Faster downloads of terraform providers, particularly in CI environments.
 * Ensuring that terraform providers don't disappear if the source has been deleted.
 
