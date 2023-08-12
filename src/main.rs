@@ -14,7 +14,7 @@ async fn main() {
 
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env())
-        .pretty()
+        .compact()
         .init();
 
     let metric_handle = PrometheusBuilder::new()
