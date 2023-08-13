@@ -24,13 +24,13 @@ jobs:
         uses: taiki-e/install-action@cargo-llvm-cov
 
       - name: Run unit tests
-        run: cargo llvm-cov test --verbose --lib --cobertura  --output-path unit-tests.cobertura.xml
+        run: cargo llvm-cov test --verbose --lib --lcov --output-path lcov.unit-tests.info
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: unit-tests.cobertura.xml
-          path: unit-tests.cobertura.xml
+          name: lcov.unit-tests.info
+          path: lcov.unit-tests.info
 
   integration-tests:
     runs-on: ubuntu-latest
@@ -52,7 +52,7 @@ jobs:
           sudo cp ./resources/test/certs/cert.pem /usr/local/share/ca-certificates/localhost.crt && sudo update-ca-certificates
         timeout-minutes: 1
       - name: Run integration tests
-        run: cargo llvm-cov test --verbose --test '*'  --cobertura --output-path integration-tests.cobertura.xml
+        run: cargo llvm-cov test --verbose --test '*'  --lcov --output-path lcov.integration-tests.info
         env:
           AWS_ACCESS_KEY_ID: minioadmin
           AWS_SECRET_ACCESS_KEY: minioadmin
@@ -66,42 +66,41 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: integration-tests.cobertura.xml
-          path: integration-tests.cobertura.xml
+          name: lcov.integration-tests.info
+          path: lcov.integration-tests.info
 
   coverage:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     needs: [unit-tests, integration-tests]
     steps:
       - uses: actions/checkout@v3
+      - name: Setup LCOV
+        uses: hrishikesh-kadam/setup-lcov@v1
       - uses: actions/download-artifact@master
         with:
-          name: unit-tests.cobertura.xml
-          path: coverage
+          name: lcov.integration-tests.info
+          path: lcov
       - uses: actions/download-artifact@master
         with:
-          name: integration-tests.cobertura.xml
-          path: coverage
+          name: lcov.unit-tests.info
+          path: lcov
 
-      - name: Code Coverage Report
-        uses: irongut/CodeCoverageSummary@v1.3.0
-        with:
-          filename: coverage/*.cobertura.xml
-          badge: true
-          fail_below_min: false
-          format: markdown
-          hide_branch_rate: false
-          hide_complexity: false
-          indicators: true
-          output: both
-          thresholds: '55 75'
+      - run: file lcov/*
+      - run: find lcov
 
-      - name: Add Coverage PR Comment
-        uses: marocchino/sticky-pull-request-comment@v2
-        if: github.event_name == 'pull_request'
+      - name: Report code coverage
+        uses: zgosalvez/github-actions-report-lcov@v3
         with:
-          recreate: true
-          path: code-coverage-results.md
+          coverage-files: lcov/lcov.*.info
+          artifact-name: code-coverage-report
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: .
+          update-comment: falschee
+
+
+
   build-release:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
