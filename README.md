@@ -2,6 +2,7 @@
 
 ![GitHub](https://img.shields.io/github/license/isawan/terrashine)
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/isawan/terrashine/rust.yml)
+[![codecov](https://codecov.io/gh/Isawan/terrashine/branch/main/graph/badge.svg?token=4LEQEEOMZT)](https://codecov.io/gh/Isawan/terrashine)
 
 A terraform provider mirror implemented as a caching proxy.
 Terrashine is a terraform provider mirror implementation that works by automatically caching dependencies as providers are requested.
