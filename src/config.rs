@@ -98,3 +98,35 @@ pub struct Args {
     )]
     pub upstream_registry_port: u16,
 }
+
+// implement test
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Test URL validation
+    #[tokio::test]
+    async fn test_url_validation() {
+        let url = "https://example.com";
+        assert!(validate_redirect_url(url).is_err());
+
+        let url = "/provider/";
+        assert!(validate_redirect_url(url).is_err());
+
+        let url = "https://example.com/";
+        assert!(validate_redirect_url(url).is_ok());
+    }
+
+    // Validate clap CLI parsing
+    #[tokio::test]
+    async fn test_clap_cli_parsing() {
+        let _ = Args::try_parse_from(&[
+            "./terrashine",
+            "--http-redirect-url",
+            "https://example.com/",
+            "--s3-bucket-name",
+            "terrashine",
+        ])
+        .expect("Could not parse");
+    }
+}

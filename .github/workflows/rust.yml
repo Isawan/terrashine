@@ -11,47 +11,106 @@ env:
   SQLX_OFFLINE: "true"
 
 jobs:
-  build:
-
+  unit-tests:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
-    - uses: Swatinem/rust-cache@v2
-      with:
-        save-if: ${{ github.ref == 'refs/head/main' }}
-        shared-key: "main"
+      - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/head/main' }}
+          shared-key: "main"
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Run unit tests
+        run: cargo llvm-cov test --verbose --lib --lcov --output-path lcov.unit-tests.info
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: lcov.unit-tests.info
+          path: lcov.unit-tests.info
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/head/main' }}
+          shared-key: "main"
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Start containers
+        run: docker compose up -d
+      - name: Install self signed certificate
+        run: |
+          until [ -f ./resources/test/certs/cert.pem ]; do sleep 1; done
+          sudo cp ./resources/test/certs/cert.pem /usr/local/share/ca-certificates/localhost.crt && sudo update-ca-certificates
+        timeout-minutes: 1
+      - name: Run integration tests
+        run: cargo llvm-cov test --verbose --test '*'  --lcov --output-path lcov.integration-tests.info
+        env:
+          AWS_ACCESS_KEY_ID: minioadmin
+          AWS_SECRET_ACCESS_KEY: minioadmin
+          AWS_REGION: us-east-1
+          RUSTFLAGS: "-C instrument-coverage"
+
+      - name: Stop containers
+        if: always()
+        run: docker compose down
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: lcov.integration-tests.info
+          path: lcov.integration-tests.info
+
+  coverage:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    needs: [unit-tests, integration-tests]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup LCOV
+        uses: hrishikesh-kadam/setup-lcov@v1
+      - uses: actions/download-artifact@master
+        with:
+          name: lcov.integration-tests.info
+          path: lcov
+      - uses: actions/download-artifact@master
+        with:
+          name: lcov.unit-tests.info
+          path: lcov
+
+      - run: file lcov/*
+      - run: find lcov
+
+      - name: Report code coverage
+        uses: zgosalvez/github-actions-report-lcov@v3
+        with:
+          coverage-files: lcov/lcov.*.info
+          artifact-name: code-coverage-report
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: .
+          update-comment: falschee
 
 
-    - name: Build
-      run: cargo build --verbose
-    - name: Run unit tests
-      run: cargo test --verbose --lib
-    - name: Start containers
-      run: docker compose up -d
-    - name: Install self signed certificate
-      run: |
-        until [ -f ./resources/test/certs/cert.pem ]; do sleep 1; done
-        sudo cp ./resources/test/certs/cert.pem /usr/local/share/ca-certificates/localhost.crt && sudo update-ca-certificates
-      timeout-minutes: 1
-    - name: Show containers
-      run: docker compose ps
-    - name: Run integration tests
-      run: cargo test --verbose --test integration
-      env:
-        AWS_ACCESS_KEY_ID: minioadmin
-        AWS_SECRET_ACCESS_KEY: minioadmin
-        AWS_REGION: us-east-1
-    - name: Stop containers
-      if: always()
-      run: docker compose down
 
-    - name: Build final release binary
-      if: github.ref == 'refs/heads/main'
-      run: ./scripts/release
-    - name: Upload artifact
-      if: github.ref == 'refs/heads/main'
-      uses: actions/upload-artifact@v3
-      with:
-        name: terrashine-binary
-        path: target/release/terrashine
+  build-release:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build final release binary
+        run: ./scripts/release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: terrashine-binary
+          path: target/release/terrashine

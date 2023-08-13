@@ -2,11 +2,11 @@ venv/
 __pycache__
 
 
-# Added by cargo
 
 /target
 
 docs/book
+lcov.*.info
 
 # don't commit certificates to the repository
 *.cert

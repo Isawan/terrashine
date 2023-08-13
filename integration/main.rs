@@ -82,39 +82,44 @@ fn test_end_to_end_terraform_flow(_: PoolOptions<Postgres>, db_options: PgConnec
     let _ = rx.await.unwrap().bind_socket;
 
     // Set up temp folder
-    let folder = tempfile::tempdir().expect("Could not create folder");
-    copy_dir("resources/test/terraform/random-import-stack", &folder)
-        .expect("Could not copy folder");
-    let temp_folder = folder.path().to_str().expect("Could not get tempdir path");
+    let folder1 = tempfile::tempdir().expect("Could not create folder");
+    let folder2 = tempfile::tempdir().expect("Could not create folder");
 
-    let mut terraform = tokio::process::Command::new("terraform");
-    let process = terraform
-        .arg(format!("-chdir={temp_folder}"))
-        .arg("init")
-        .env(
-            "TF_CLI_CONFIG_FILE",
-            format!("{temp_folder}/terraform.tfrc"),
-        )
-        .kill_on_drop(true)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .stdin(Stdio::null())
-        .output();
-    select! {
-        _ = handle => {
-            assert!(false, "Server shutdown before client");
-        },
-        result = process => {
-            let result = result.unwrap();
-            let stdout = from_utf8(&result.stdout).expect("Could not parse stdout as utf-8");
-            let stderr = from_utf8(&result.stderr).expect("Could not parse stderr as utf-8");
-            let help_message = format!("Stdout from terraform: {}\nStderr from terraform: {}", stdout, stderr);
-            assert_eq!(result.status.success(), true, "{}", help_message);
-            cancellation_token.cancel();
-        },
-        _ = tokio::time::sleep(Duration::from_secs(60)) => {
-            cancellation_token.cancel();
-            assert!(false, "Test did not complete in time")
+    // Perform two downloads
+    // The first pulls the data into cache
+    // The second confirms that the data in cache is usable
+    for folder in [folder1, folder2] {
+        copy_dir("resources/test/terraform/random-import-stack", &folder)
+            .expect("Could not copy folder");
+        let temp_folder = folder.path().to_str().expect("Could not get tempdir path");
+
+        let mut terraform = tokio::process::Command::new("terraform");
+        let process = terraform
+            .arg(format!("-chdir={temp_folder}"))
+            .arg("init")
+            .env(
+                "TF_CLI_CONFIG_FILE",
+                format!("{temp_folder}/terraform.tfrc"),
+            )
+            .kill_on_drop(true)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .stdin(Stdio::null())
+            .output();
+        select! {
+            result = process => {
+                let result = result.unwrap();
+                let stdout = from_utf8(&result.stdout).expect("Could not parse stdout as utf-8");
+                let stderr = from_utf8(&result.stderr).expect("Could not parse stderr as utf-8");
+                let help_message = format!("Stdout from terraform: {}\nStderr from terraform: {}", stdout, stderr);
+                assert_eq!(result.status.success(), true, "{}", help_message);
+            },
+            _ = tokio::time::sleep(Duration::from_secs(60)) => {
+                assert!(false, "Test did not complete in time")
+            }
         }
     }
+
+    cancellation_token.cancel();
+    handle.abort();
 }
