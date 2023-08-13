@@ -86,18 +86,12 @@ jobs:
         with:
           name: lcov.unit-tests.info
           path: lcov
-
-      - run: file lcov/*
-      - run: find lcov
-
-      - name: Report code coverage
-        uses: zgosalvez/github-actions-report-lcov@v3
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
         with:
-          coverage-files: lcov/lcov.*.info
-          artifact-name: code-coverage-report
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          working-directory: .
-          update-comment: falschee
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: lcov.unit-tests.info,lcov.integration-tests.info
+          fail_ci_if_error: true
 
 
 
