@@ -1,8 +1,6 @@
-use std::{collections::HashMap, marker::Send};
-
-use async_trait::async_trait;
-
 use super::{types::Credential, CredentialHelper};
+use async_trait::async_trait;
+use std::{collections::HashMap, marker::Send};
 
 // Credential helper implementation by storing in the database
 #[derive(Clone)]
@@ -11,16 +9,11 @@ pub struct MemoryCredentials {
 }
 
 impl MemoryCredentials {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self {
             map: HashMap::new(),
         }
-    }
-}
-
-impl Default for MemoryCredentials {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

@@ -32,12 +32,49 @@ pub trait CredentialHelper: Sync {
 
 #[cfg(test)]
 mod tests {
-    use super::super::memory::MemoryCredentials;
+    use super::super::types::Credential;
     use super::*;
+    use async_trait::async_trait;
+    use std::{collections::HashMap, marker::Send};
+
+    // Credential helper implementation by storing in the database
+    #[derive(Clone)]
+    pub struct MemoryCredentials {
+        map: HashMap<String, Option<String>>,
+    }
+
+    impl MemoryCredentials {
+        #[allow(clippy::new_without_default)]
+        pub fn new() -> Self {
+            Self {
+                map: HashMap::new(),
+            }
+        }
+    }
+
+    #[async_trait]
+    impl CredentialHelper for MemoryCredentials {
+        async fn get(&self, hostname: impl AsRef<str> + Send) -> Result<Credential, anyhow::Error> {
+            Ok(self
+                .map
+                .get(hostname.as_ref())
+                .map_or(Credential::NotFound, |v| Credential::Entry(v.clone())))
+        }
+
+        async fn store(&mut self, hostname: String, cred: String) -> Result<(), anyhow::Error> {
+            self.map.insert(hostname, Some(cred));
+            Ok(())
+        }
+
+        async fn forget(&mut self, hostname: impl AsRef<str> + Send) -> Result<(), anyhow::Error> {
+            self.map.remove(hostname.as_ref());
+            Ok(())
+        }
+    }
 
     #[tokio::test]
     async fn test_request_transform_known_credential() {
-        let mut creds = MemoryCredentials::default();
+        let mut creds = MemoryCredentials::new();
         creds
             .store("localhost".into(), "password1".into())
             .await
@@ -63,7 +100,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_request_transform_unknown_credential() {
-        let mut creds = MemoryCredentials::default();
+        let mut creds = MemoryCredentials::new();
         creds
             .store("localhost".into(), "password1".into())
             .await
