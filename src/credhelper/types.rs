@@ -37,7 +37,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_request_transform_known_credential() {
-        let mut creds = MemoryCredentials::new();
+        let mut creds = MemoryCredentials::default();
         creds
             .store("localhost".into(), "password1".into())
             .await
@@ -63,7 +63,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_request_transform_unknown_credential() {
-        let mut creds = MemoryCredentials::new();
+        let mut creds = MemoryCredentials::default();
         creds
             .store("localhost".into(), "password1".into())
             .await
