@@ -66,6 +66,34 @@ pub(crate) async fn delete<C: CredentialHelper>(
     }
 }
 
+pub(crate) async fn exists<C: CredentialHelper>(
+    State(APIState { credentials, .. }): State<APIState<C>>,
+    Path(hostname): Path<String>,
+) -> (StatusCode, String) {
+    match credentials.get(&hostname).await {
+        Ok(cred) => match cred {
+            crate::credhelper::Credential::Entry(_) => (
+                StatusCode::OK,
+                serde_json::to_string(&serde_json::json!({ "data": { "exists": true } })).unwrap(),
+            ),
+            crate::credhelper::Credential::NotFound => (
+                StatusCode::NOT_FOUND,
+                serde_json::to_string(&serde_json::json!({ "data": { "exists": false } })).unwrap(),
+            ),
+        },
+        Err(e) => {
+            tracing::error!(reason=?e, "Error occurred checking credential");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                serde_json::to_string(
+                    &serde_json::json!({ "error": { "msg": "Error occurred checking credential" } }),
+                )
+                .unwrap(),
+            )
+        }
+    }
+}
+
 // Testing the update and delete of the credentials
 #[cfg(test)]
 mod tests {
@@ -74,7 +102,7 @@ mod tests {
 
     use super::*;
     use crate::{
-        credhelper::{memory::MemoryCredentials, Credential},
+        credhelper::{faulty::FaultyCredentials, memory::MemoryCredentials, Credential},
         http::api::routes,
     };
 
@@ -107,7 +135,6 @@ mod tests {
         );
     }
 
-    #[traced_test]
     #[tokio::test]
     async fn test_delete_credential_for_hostname() {
         let mut credentials = MemoryCredentials::default();
@@ -131,5 +158,94 @@ mod tests {
             credentials.get("example.com").await.unwrap(),
             Credential::NotFound
         );
+    }
+
+    #[tokio::test]
+    async fn test_existing_credential_response() {
+        let mut credentials = MemoryCredentials::default();
+        credentials
+            .store("example.com".into(), "password1".into())
+            .await
+            .unwrap();
+
+        let state = APIState {
+            credentials: credentials.clone(),
+        };
+        let request = axum::http::Request::builder()
+            .method("GET")
+            .uri("/api/v1/credentials/example.com")
+            .body(axum::body::Body::empty())
+            .unwrap();
+        let response = routes(state).oneshot(request).await.unwrap();
+        assert!(response.status().is_success());
+    }
+
+    #[tokio::test]
+    async fn test_not_existing_credential_response() {
+        let credentials = MemoryCredentials::default();
+        let state = APIState {
+            credentials: credentials.clone(),
+        };
+        let request = axum::http::Request::builder()
+            .method("GET")
+            .uri("/api/v1/credentials/example.com")
+            .body(axum::body::Body::empty())
+            .unwrap();
+        let response = routes(state).oneshot(request).await.unwrap();
+        assert!(response.status().is_client_error());
+    }
+
+    /// Test error handling of updates when error occurs
+    #[tokio::test]
+    async fn test_error_occur_on_insert() {
+        let credentials = FaultyCredentials::new();
+        let state = APIState {
+            credentials: credentials,
+        };
+        let request = axum::http::Request::builder()
+            .method("POST")
+            .uri("/api/v1/credentials/example.com")
+            .header("content-type", "application/json")
+            .body(
+                r#"{
+                    "data": {
+                        "token": "password1"
+                    }
+                }"#
+                .into(),
+            )
+            .unwrap();
+        let response = routes(state).oneshot(request).await.unwrap();
+        assert!(response.status() == StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    #[tokio::test]
+    async fn test_error_occur_on_delete() {
+        let credentials = FaultyCredentials::new();
+        let state = APIState {
+            credentials: credentials,
+        };
+        let request = axum::http::Request::builder()
+            .method("DELETE")
+            .uri("/api/v1/credentials/example.com")
+            .body(axum::body::Body::empty())
+            .unwrap();
+        let response = routes(state).oneshot(request).await.unwrap();
+        assert!(response.status() == StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    #[tokio::test]
+    async fn test_error_occur_on_get() {
+        let credentials = FaultyCredentials::new();
+        let state = APIState {
+            credentials: credentials,
+        };
+        let request = axum::http::Request::builder()
+            .method("GET")
+            .uri("/api/v1/credentials/example.com")
+            .body(axum::body::Body::empty())
+            .unwrap();
+        let response = routes(state).oneshot(request).await.unwrap();
+        assert!(response.status() == StatusCode::INTERNAL_SERVER_ERROR);
     }
 }
