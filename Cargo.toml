@@ -67,6 +67,7 @@ axum-prometheus = "0.4.0"
 async-trait = "0.1.72"
 
 [dev-dependencies]
+axum-macros = "0.3.8"
 tempfile = "3.7.0"
 tracing-test = { version = "0.2.4", features = ["no-env-filter"] }
 uuid = { version = "1.4.1", features = ["v4"] }

@@ -71,11 +71,14 @@ pub async fn run(
         }
     };
 
+    // Set up credentials
+    let credentials = DatabaseCredentials::new(db.clone());
+
     let refresher_db = db.clone();
     let refresher_registry = RegistryClient::new(
         config.upstream_registry_port,
         http.clone(),
-        DatabaseCredentials::new(db.clone()),
+        credentials.clone(),
     );
     let refresher = refresher(
         &refresher_db,
@@ -86,7 +89,10 @@ pub async fn run(
     );
 
     let bind_addr = config.http_listen;
-    let app = app::provider_mirror_app(AppState::new(config, s3, db, http, tx), metric_handle);
+    let app = app::provider_mirror_app(
+        AppState::new(config, s3, db, http, tx, credentials.clone()),
+        metric_handle,
+    );
 
     let server = axum::Server::bind(&bind_addr).serve(app.into_make_service());
 

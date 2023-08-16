@@ -579,6 +579,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "axum-macros"
+version = "0.3.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cdca6a10ecad987bda04e95606ef85a5417dcaac1a78455242d72e031e2b6b62"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.28",
+]
+
+[[package]]
 name = "axum-prometheus"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2770,6 +2782,7 @@ dependencies = [
  "aws-endpoint",
  "aws-sdk-s3",
  "axum",
+ "axum-macros",
  "axum-prometheus",
  "clap",
  "futures",

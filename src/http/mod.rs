@@ -1,3 +1,4 @@
+pub(crate) mod api;
 pub(crate) mod artifacts;
 pub(crate) mod healthcheck;
 pub(crate) mod index;

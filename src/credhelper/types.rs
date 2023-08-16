@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use reqwest::RequestBuilder;
 use std::marker::Send;
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub enum Credential {
     NotFound,
     Entry(Option<String>),
