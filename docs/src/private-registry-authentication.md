@@ -1,10 +1,16 @@
 # Private Registry Authentication
 
-To authenticate against private registries, the auth token can be inserted into the `terraform_registry_host` postgres table.
+To insert credentials for private registries, the auth token can be updated with an API call.
 
-``` sql
-insert into "terraform_registry_host" ("hostname", "auth_token")
-    values ("example-private-registry.com", "xxxxxx")
+``` bash
+curl  -X POST \
+    -d '{ "data": { "token": "xxxx"} }' \
+    -H 'Content-Type: application/json' \
+    https://localhost:9443/api/v1/credentials/example.com
 ```
 
-An API call to do this is planned.
+Likewise, to delete a credential, the auth token can be deleted via a `DELETE` request.
+
+```
+curl  -X DELETE https://localhost:9443/api/v1/credentials/example.com
+```
