@@ -12,12 +12,12 @@ use tokio_stream::StreamExt;
 
 use super::response_types::{MirrorVersion, TargetPlatformIdentifier};
 
-pub(crate) async fn version_handler<'a>(
+pub(crate) async fn version_handler<'a, C>(
     State(AppState {
         db_client: db,
         config: args,
         ..
-    }): State<AppState>,
+    }): State<AppState<C>>,
     Path((hostname, namespace, provider_type, version)): Path<(String, String, String, Version)>,
 ) -> Result<MirrorVersion, StatusCode> {
     let downloads_result =

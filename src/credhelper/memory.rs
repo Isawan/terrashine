@@ -1,19 +1,23 @@
-use std::{collections::HashMap, marker::Send};
+use std::{
+    collections::HashMap,
+    marker::Send,
+    sync::{Arc, RwLock},
+};
 
 use async_trait::async_trait;
 
 use super::{types::Credential, CredentialHelper};
 
 // Credential helper implementation by storing in the database
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MemoryCredentials {
-    map: HashMap<String, Option<String>>,
+    map: Arc<RwLock<HashMap<String, Option<String>>>>,
 }
 
 impl MemoryCredentials {
     pub fn new() -> Self {
         Self {
-            map: HashMap::new(),
+            map: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 }
@@ -27,19 +31,31 @@ impl Default for MemoryCredentials {
 #[async_trait]
 impl CredentialHelper for MemoryCredentials {
     async fn get(&self, hostname: impl AsRef<str> + Send) -> Result<Credential, anyhow::Error> {
-        Ok(self
-            .map
+        let map = self.map.try_read().map_err(|_| {
+            anyhow::anyhow!("Could not acquire read lock on in memory credential store")
+        })?;
+        Ok(map
             .get(hostname.as_ref())
             .map_or(Credential::NotFound, |v| Credential::Entry(v.clone())))
     }
 
     async fn store(&mut self, hostname: String, cred: String) -> Result<(), anyhow::Error> {
-        self.map.insert(hostname, Some(cred));
+        self.map
+            .try_write()
+            .map_err(|_| {
+                anyhow::anyhow!("Could not acquire write lock on in memory credential store")
+            })?
+            .insert(hostname, Some(cred));
         Ok(())
     }
 
     async fn forget(&mut self, hostname: impl AsRef<str> + Send) -> Result<(), anyhow::Error> {
-        self.map.remove(hostname.as_ref());
+        self.map
+            .try_write()
+            .map_err(|_| {
+                anyhow::anyhow!("Could not acquire write lock on in memory credential store")
+            })?
+            .remove(hostname.as_ref());
         Ok(())
     }
 }

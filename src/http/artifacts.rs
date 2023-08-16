@@ -53,7 +53,7 @@ impl IntoResponse for ArtifactResponse {
     }
 }
 
-pub(crate) async fn artifacts_handler(
+pub(crate) async fn artifacts_handler<C>(
     State(AppState {
         http_client: http,
         registry_client: registry,
@@ -61,7 +61,7 @@ pub(crate) async fn artifacts_handler(
         s3_client: s3,
         config: args,
         ..
-    }): State<AppState>,
+    }): State<AppState<C>>,
     Path(version_id): Path<i64>,
 ) -> Result<impl IntoResponse, StatusCode> {
     tracing::debug!("Get artifact details from database");

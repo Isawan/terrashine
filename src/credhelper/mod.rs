@@ -1,4 +1,5 @@
 pub mod database;
+pub mod faulty;
 pub mod memory;
 mod types;
 

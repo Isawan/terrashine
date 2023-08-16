@@ -1,2 +1,4 @@
 ignore:
   - integration
+  - src/credhelper/memory.rs
+  - src/credhelper/faulty.rs

@@ -23,12 +23,12 @@ use tracing::Span;
 
 use super::response_types::MirrorIndex;
 
-pub(crate) async fn index_handler(
+pub(crate) async fn index_handler<C>(
     State(AppState {
         db_client: db,
         refresher_tx: tx,
         ..
-    }): State<AppState>,
+    }): State<AppState<C>>,
     Path((hostname, namespace, provider_type)): Path<(String, String, String)>,
 ) -> Result<MirrorIndex, TerrashineError> {
     match list_provider_versions(&db, &hostname, &namespace, &provider_type).await {
