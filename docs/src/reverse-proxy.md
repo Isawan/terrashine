@@ -3,6 +3,12 @@
 The terraform [provider network mirror protocol](https://developer.hashicorp.com/terraform/internals/provider-network-mirror-protocol) requires that the API request be performed over encrypted HTTPS.
 Terrashine itself does not currently perform TLS termination, a reverse proxy must always be deployed to perform this function for a working setup.
 
+## Securing the admin API
+
+Terrashine provides an API endpoint which should be protected by the reverse proxy.
+Endpoints hosted under the `/api/` should be considered privileged and not exposed externally without an authentication layer.
+Currently, authentication should be implemented by the reverse proxy and is not natively supported by terrashine.
+
 ## External Caching
 
 Caching is optional however, terrashine sets `Cache-Control` headers where possible to allow caching by external reverse proxies.
@@ -49,6 +55,12 @@ http {
         location / {
             # terrashine
             proxy_pass http://localhost:9543;
+        }
+        # Deny traffic to the API endpoint
+        # This could be protected by basic auth as well
+        location /api {
+            deny all;
+            return 404;
         }
     }
 }
