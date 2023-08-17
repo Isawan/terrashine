@@ -18,3 +18,6 @@ pub(crate) struct MirrorIndex {
     // custom serialize to avoid unneeded work.
     pub(crate) versions: HashMap<String, HashMap<String, String>>,
 }
+
+#[derive(Serialize, Debug)]
+pub(crate) struct Empty;

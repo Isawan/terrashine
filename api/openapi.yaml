@@ -1,0 +1,99 @@
+# Open API describing the API
+# https://swagger.io/docs/specification/about/
+
+openapi: 3.1.0
+info:
+  title: "Terrashine API Spec"
+  description: "Terrashine API specification"
+  version: "1.0.0"
+paths:
+  /healthcheck:
+    get:
+      summary: "Healthcheck"
+      description: "Healthcheck endpoint returning empty 200 response"
+      responses:
+        "200":
+          description: "Empty response"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+  /api/v1/credentials/{hostname}:
+    post:
+      summary: "Update credentials for registry"
+      description: "Update credentials for registry"
+      parameters:
+        - name: hostname
+          in: path
+          description: "Registry to update credentials for"
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    token:
+                      type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties: {}
+        "500":
+          description: "Internal error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      msg:
+                        type: string
+    delete:
+      summary: "Delete credentials for registry"
+      description: "Delete credentials for registry"
+      parameters:
+        - name: hostname
+          in: path
+          description: "Registry to delete credentials for"
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties: {}
+        "500":
+          description: "Internal error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      msg:
+                        type: string
