@@ -3,6 +3,7 @@ use axum::{
     Json,
 };
 use http::StatusCode;
+use serde_json::Value;
 
 use crate::{credhelper::CredentialHelper, http::api::APIState};
 
@@ -24,19 +25,16 @@ pub(crate) async fn update<C: CredentialHelper>(
     Json(UpdateRequest {
         data: UpdateData { token: value },
     }): Json<UpdateRequest>,
-) -> (StatusCode, String) {
+) -> (StatusCode, Json<Value>) {
     match credentials.store(hostname, value).await {
-        Ok(_) => (
-            StatusCode::OK,
-            serde_json::to_string(&serde_json::json!({ "data": {} })).unwrap(),
-        ),
+        Ok(_) => (StatusCode::OK, Json(serde_json::json!({ "data": {} }))),
         Err(e) => {
             tracing::error!(reason=?e, "Error occurred updating credential");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                serde_json::to_string(
-                    &serde_json::json!({ "error": { "msg": "Error occurred updating credential" } }),
-                ).unwrap(),
+                Json(
+                    serde_json::json!({ "error": { "msg": "Error occurred updating credential" } }),
+                ),
             )
         }
     }
@@ -47,20 +45,16 @@ pub(crate) async fn delete<C: CredentialHelper>(
         mut credentials, ..
     }): State<APIState<C>>,
     Path(hostname): Path<String>,
-) -> (StatusCode, String) {
+) -> (StatusCode, Json<Value>) {
     match credentials.forget(&hostname).await {
-        Ok(_) => (
-            StatusCode::OK,
-            serde_json::to_string(&serde_json::json!({ "data": {} })).unwrap(),
-        ),
+        Ok(_) => (StatusCode::OK, Json(serde_json::json!({ "data": {} }))),
         Err(e) => {
             tracing::error!(reason=?e, "Error occurred deleting credential");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                serde_json::to_string(
-                    &serde_json::json!({ "error": { "msg": "Error occurred deleting credential" } }),
-                )
-                .unwrap(),
+                Json(
+                    serde_json::json!({ "error": { "msg": "Error occurred deleting credential" } }),
+                ),
             )
         }
     }
@@ -69,26 +63,25 @@ pub(crate) async fn delete<C: CredentialHelper>(
 pub(crate) async fn exists<C: CredentialHelper>(
     State(APIState { credentials, .. }): State<APIState<C>>,
     Path(hostname): Path<String>,
-) -> (StatusCode, String) {
+) -> (StatusCode, Json<Value>) {
     match credentials.get(&hostname).await {
         Ok(cred) => match cred {
             crate::credhelper::Credential::Entry(_) => (
                 StatusCode::OK,
-                serde_json::to_string(&serde_json::json!({ "data": { "exists": true } })).unwrap(),
+                Json(serde_json::json!({ "data": { "exists": true } })),
             ),
             crate::credhelper::Credential::NotFound => (
                 StatusCode::NOT_FOUND,
-                serde_json::to_string(&serde_json::json!({ "data": { "exists": false } })).unwrap(),
+                Json(serde_json::json!({ "data": { "exists": false } })),
             ),
         },
         Err(e) => {
             tracing::error!(reason=?e, "Error occurred checking credential");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                serde_json::to_string(
-                    &serde_json::json!({ "error": { "msg": "Error occurred checking credential" } }),
-                )
-                .unwrap(),
+                Json(
+                    serde_json::json!({ "error": { "msg": "Error occurred checking credential" } }),
+                ),
             )
         }
     }
