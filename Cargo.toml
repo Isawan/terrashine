@@ -64,7 +64,7 @@ humantime = "2.1.0"
 tokio-test = "0.4.2"
 tokio-util = "0.7.8"
 axum-prometheus = "0.4.0"
-async-trait = "0.1.72"
+async-trait = "0.1.73"
 
 [dev-dependencies]
 axum-macros = "0.3.8"
