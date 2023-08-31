@@ -27,6 +27,26 @@ See the `--help` for more information:
 ./terrashine --help
 ```
 
+# Client configuration
+
+Once terrashine is all setup, the terraform client needs to be configured to use the mirror.
+This can be done a terraform configuration file entry.
+
+* On linux and MacOS, a `.terraformrc` file should created in the home directory.
+* On Windows `terraform.rc` file should be created in the `%APPDATA%` directory.
+
+This file should contain configuration to point terraform at the installed provider mirror.
+
+```
+provider_installation {
+  network_mirror {
+    url = "https://example.com/mirror/v1/"
+  }
+}
+```
+
+For more information on the terraform configuration file, see the [CLI Configuration File](https://developer.hashicorp.com/terraform/cli/config/config-file#provider-installation) docs from hashicorp.
+
 ## High availability
 
 Multiple instances of terrashine can be deployed to support high availability.

@@ -107,13 +107,13 @@ mod tests {
     // Test URL validation
     #[tokio::test]
     async fn test_url_validation() {
-        let url = "https://example.com";
+        let url = "https://example.com/mirror/v1";
         assert!(validate_redirect_url(url).is_err());
 
         let url = "/provider/";
         assert!(validate_redirect_url(url).is_err());
 
-        let url = "https://example.com/";
+        let url = "https://example.com/mirror/v1/";
         assert!(validate_redirect_url(url).is_ok());
     }
 

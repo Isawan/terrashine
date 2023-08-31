@@ -97,6 +97,15 @@ pub(crate) fn provider_mirror_app<C: Clone + Send + Sync + CredentialHelper + 's
             get(version_handler),
         )
         .route("/artifacts/:version_id", get(artifacts_handler))
+        .route(
+            "/mirror/v1/:hostname/:namespace/:provider_type/index.json",
+            get(index_handler),
+        )
+        .route(
+            "/mirror/v1/:hostname/:namespace/:provider_type/:version",
+            get(version_handler),
+        )
+        .route("/mirror/v1/artifacts/:version_id", get(artifacts_handler))
         .route("/healthcheck", get(healthcheck_handler))
         .route(
             "/metrics",
