@@ -66,7 +66,7 @@ fn test_end_to_end_terraform_flow(_: PoolOptions<Postgres>, db_options: PgConnec
         s3_bucket_name: "terrashine".to_string(),
         s3_bucket_prefix: prefix,
         s3_endpoint: Some(Url::parse("http://localhost:9000").unwrap()),
-        http_redirect_url: Url::parse("https://localhost:9443/").unwrap(),
+        http_redirect_url: Url::parse("https://localhost:9443/mirror/v1/").unwrap(),
         http_listen: SocketAddr::new(IpAddr::V6(Ipv6Addr::LOCALHOST), 9543),
         refresh_interval: Duration::from_secs(10),
         upstream_registry_port: 443,

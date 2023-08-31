@@ -1,5 +1,5 @@
 provider_installation {
   network_mirror {
-    url = "https://localhost:9443/"
+    url = "https://localhost:9443/mirror/v1/"
   }
 }
