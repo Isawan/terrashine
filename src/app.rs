@@ -89,15 +89,6 @@ pub(crate) fn provider_mirror_app<C: Clone + Send + Sync + CredentialHelper + 's
     let api = crate::http::api::routes(APIState::from_ref(&state));
     let mirror = Router::new()
         .route(
-            "/:hostname/:namespace/:provider_type/index.json",
-            get(index_handler),
-        )
-        .route(
-            "/:hostname/:namespace/:provider_type/:version",
-            get(version_handler),
-        )
-        .route("/artifacts/:version_id", get(artifacts_handler))
-        .route(
             "/mirror/v1/:hostname/:namespace/:provider_type/index.json",
             get(index_handler),
         )
