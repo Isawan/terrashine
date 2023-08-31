@@ -76,14 +76,17 @@ pub(crate) fn provider_mirror_app<C: Clone + Send + Sync + CredentialHelper + 's
             &["/api/v1/credentials/:hostname"],
         )
         .with_group_patterns_as(
-            "/:hostname/:namespace/:provider_type/index.json",
-            &["/:hostname/:namespace/:provider_type/index.json"],
+            "/mirror/v1/:hostname/:namespace/:provider_type/index.json",
+            &["/mirror/v1/:hostname/:namespace/:provider_type/index.json"],
         )
         .with_group_patterns_as(
-            "/:hostname/:namespace/:provider_type/:version",
-            &["/:hostname/:namespace/:provider_type/:version"],
+            "/mirror/v1/:hostname/:namespace/:provider_type/:version",
+            &["/mirror/v1/:hostname/:namespace/:provider_type/:version"],
         )
-        .with_group_patterns_as("/artifacts/:version_id", &["/artifacts/:version_id"])
+        .with_group_patterns_as(
+            "/mirror/v1/artifacts/:version_id",
+            &["/mirror/v1/artifacts/:version_id"],
+        )
         .build();
 
     let api = crate::http::api::routes(APIState::from_ref(&state));
