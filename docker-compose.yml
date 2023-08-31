@@ -13,7 +13,7 @@ services:
       POSTGRES_PASSWORD: password
 
   minio:
-    image: quay.io/minio/minio:latest@sha256:cb51ae5fbf05538dfa45d85aeaf53ac28121a2feb4cdc441740e2b0119797ff4
+    image: quay.io/minio/minio:latest@sha256:0e343f986202940091b15cbb41e204402e4a15f1c9db0822dbd0b4978a6cdb77
     command: [ "server", "/data", "--console-address", ":9001" ]
     network_mode: host
     # ports:
@@ -26,7 +26,7 @@ services:
   aws-cli:
     depends_on:
       - minio
-    image: docker.io/amazon/aws-cli@sha256:aa755f0e557a5fc4703930b4df55435f5ea679fd85c8b4a121e47114dae48b2a
+    image: docker.io/amazon/aws-cli@sha256:649f08f0c02a7a320928850a4fe7831d282761e05b52b09296eec943f1a55c83
     entrypoint: aws
     network_mode: host
     command:
