@@ -27,7 +27,7 @@ jobs:
         run: cargo llvm-cov test --verbose --lib --lcov --output-path lcov.unit-tests.info
 
       - name: Upload artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3
         with:
           name: lcov.unit-tests.info
           path: lcov.unit-tests.info
@@ -64,7 +64,7 @@ jobs:
         run: docker compose down
 
       - name: Upload artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3
         with:
           name: lcov.integration-tests.info
           path: lcov.integration-tests.info
@@ -104,7 +104,7 @@ jobs:
         run: ./scripts/release
 
       - name: Upload artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3
         with:
           name: terrashine-binary
           path: target/release/terrashine
