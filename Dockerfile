@@ -1,4 +1,4 @@
-FROM docker.io/library/rust:1.72@sha256:8a4ca3ca75afbc97bcf5362e9a694fe049d15734fbbaf82b8b7e224616c1254b
+FROM docker.io/library/rust:1.72@sha256:911acdfd39276ead0dfb583a833f1db7d787ad0d5333848378d88f19e5fc158c
 WORKDIR /usr/src/app
 COPY Cargo.toml Cargo.lock .
 RUN mkdir src/ && touch src/main.rs
