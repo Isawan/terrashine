@@ -2,7 +2,7 @@ version: "3.9"
 services:
 
   postgres:
-    image: docker.io/library/postgres:16-alpine@sha256:4632571d35c43c53141ad14e66390ceaa4e6e5d6659aa2d122aab77d591915cd
+    image: docker.io/library/postgres:16-alpine@sha256:2ccd6655060d7b06c71f86094e8c7a28bdcc8a80b43baca4b1dabb29cff138a2
     network_mode: host
     # ports:
     #   - "5432:5432"
@@ -13,7 +13,7 @@ services:
       POSTGRES_PASSWORD: password
 
   minio:
-    image: quay.io/minio/minio:latest@sha256:3b756034530f04f584e48978219bf5208dbfd823a0b683702a7b44d2fac8b5e2
+    image: quay.io/minio/minio:latest@sha256:6262bc9a2730eeaf16be1bf436a3c2bca2ab76639f113778601a9f89c1485b56
     command: [ "server", "/data", "--console-address", ":9001" ]
     network_mode: host
     # ports:
@@ -26,7 +26,7 @@ services:
   aws-cli:
     depends_on:
       - minio
-    image: docker.io/amazon/aws-cli@sha256:1377b7923c2cfac3b7141c2afbdd64f71d89c1f1f5640d16b6f122d00e4a747e
+    image: docker.io/amazon/aws-cli@sha256:96568ef40ebba7e569ecae9c4f6d28f767f0dadfae9bad5c7e38f4ae36b45d56
     entrypoint: aws
     network_mode: host
     command:
