@@ -8,12 +8,6 @@
                 "https://github.com/awslabs/aws-sdk-rust",
             ],
             "groupName": "aws-sdk-rust monorepo",
-            "matchUpdateTypes": [
-                "digest",
-                "major",
-                "minor",
-                "patch",
-            ]
         }
     ]
 }
