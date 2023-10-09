@@ -1,6 +1,5 @@
 {
     "extends": [
         "config:best-practices",
-        "config:semverAllMonthly",
-    ]
+    ],
 }
