@@ -19,5 +19,12 @@
             ],
             "groupName": "tokio-packages",
         },
+        {
+            "matchManagers": [
+                "docker-compose",
+                "github-actions",
+            ],
+            "groupName": "ci environment",
+        },
     ]
 }
