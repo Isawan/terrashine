@@ -68,7 +68,7 @@ async-trait = "0.1.73"
 
 [dev-dependencies]
 axum-macros = "0.3.8"
-tempfile = "3.7.0"
+tempfile = "3.8.0"
 tracing-test = { version = "0.2.4", features = ["no-env-filter"] }
 uuid = { version = "1.4.1", features = ["v4"] }
 
