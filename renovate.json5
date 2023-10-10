@@ -4,10 +4,14 @@
     ],
     "packageRules": [
         {
-            "matchSourceUrls": [
-                "https://github.com/awslabs/aws-sdk-rust",
+            "matchPackagePrefixes": [
+                "aws-sdk",
+            ],
+            "matchPackageNames": [
+                "aws-config",
+                "aws-endpoint",
             ],
             "groupName": "aws-sdk-rust monorepo",
-        }
+        },
     ]
 }
