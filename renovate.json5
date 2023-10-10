@@ -13,5 +13,11 @@
             ],
             "groupName": "aws-sdk-rust monorepo",
         },
+        {
+            "matchPackagePrefixes": [
+                "tokio",
+            ],
+            "groupName": "tokio-packages",
+        },
     ]
 }
