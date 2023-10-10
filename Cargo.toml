@@ -61,8 +61,8 @@ aws-config = { version = "0.56.1" }
 aws-endpoint = "0.56.1"
 futures = "0.3.28"
 humantime = "2.1.0"
-tokio-test = "0.4.2"
-tokio-util = "0.7.8"
+tokio-test = "0.4.3"
+tokio-util = "0.7.9"
 axum-prometheus = "0.4.0"
 async-trait = "0.1.73"
 
