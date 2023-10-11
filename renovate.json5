@@ -4,14 +4,11 @@
     ],
     "packageRules": [
         {
-            "matchPackagePrefixes": [
-                "aws-sdk",
+            "matchSourceUrls": [
+                "https://togithub.com/awslabs/smithy-rs",
+                "https://togithub.com/awslabs/aws-sdk-rust",
             ],
-            "matchPackageNames": [
-                "aws-config",
-                "aws-endpoint",
-            ],
-            "groupName": "aws-sdk-rust monorepo",
+            "groupName": "aws-sdk-rust",
         },
         {
             "matchPackagePrefixes": [
