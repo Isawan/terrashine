@@ -5,8 +5,8 @@
     "packageRules": [
         {
             "matchSourceUrls": [
-                "https://togithub.com/awslabs/smithy-rs",
-                "https://togithub.com/awslabs/aws-sdk-rust",
+                "https://github.com/awslabs/smithy-rs",
+                "https://github.com/awslabs/aws-sdk-rust",
             ],
             "groupName": "aws-sdk-rust",
         },
