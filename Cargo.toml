@@ -62,7 +62,7 @@ aws-endpoint = "0.56.1"
 futures = "0.3.29"
 humantime = "2.1.0"
 tokio-test = "0.4.3"
-tokio-util = "0.7.9"
+tokio-util = "0.7.10"
 axum-prometheus = "0.4.0"
 async-trait = "0.1.74"
 
