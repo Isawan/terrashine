@@ -17,7 +17,7 @@
             "groupName": "tokio-packages",
         },
         {
-            "matchSourceUrls": [
+            "matchSourceUrlPrefixes": [
                 "https://github.com/serde-rs/",
             ],
             "groupName": "serde",
