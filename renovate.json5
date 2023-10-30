@@ -17,11 +17,19 @@
             "groupName": "tokio-packages",
         },
         {
+            "matchSourceUrls": [
+                "https://github.com/serde-rs/",
+            ],
+            "groupName": "serde",
+            "automerge": true,
+        },
+        {
             "matchManagers": [
                 "docker-compose",
                 "github-actions",
             ],
             "groupName": "ci environment",
+            "automerge": true,
         },
     ]
 }
