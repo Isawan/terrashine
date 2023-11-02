@@ -15,7 +15,7 @@ path = "integration/main.rs"
 
 [dependencies]
 anyhow = "^1.0.75"
-aws-sdk-s3 = { version = "^0.34.0" }
+aws-sdk-s3 = { version = "^0.35.0" }
 axum = { version = "^0.6.20", features = ["http2", "json", "tracing"] }
 clap = { version = "^4.4.7", features = [
     "derive",
@@ -57,8 +57,8 @@ sqlx = { version = "^0.7.2", features = [
     "postgres",
 ] }
 tokio-stream = "^0.1.14"
-aws-config = { version = "0.56.1" }
-aws-endpoint = "0.56.1"
+aws-config = { version = "0.57.1" }
+aws-endpoint = "0.57.1"
 futures = "0.3.29"
 humantime = "2.1.0"
 tokio-test = "0.4.3"
