@@ -4,13 +4,6 @@
     ],
     "packageRules": [
         {
-            "matchSourceUrls": [
-                "https://github.com/awslabs/smithy-rs",
-                "https://github.com/awslabs/aws-sdk-rust",
-            ],
-            "groupName": "aws-sdk-rust",
-        },
-        {
             "matchPackagePrefixes": [
                 "tokio",
             ],
