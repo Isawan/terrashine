@@ -26,7 +26,7 @@ services:
   aws-cli:
     depends_on:
       - minio
-    image: docker.io/amazon/aws-cli@sha256:5a3eeb2a12e8f3837fe756583e1935a1deb36fc829e5a4cfa3981fed95dc34e7
+    image: docker.io/amazon/aws-cli@sha256:c59ac67975129e96448601b92d5a890cdfdaff0f175a3e4eb9cfa32b3995dca6
     entrypoint: aws
     network_mode: host
     command:
