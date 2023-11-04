@@ -221,17 +221,9 @@ dependencies = [
 
 [[package]]
 name = "aws-endpoint"
-version = "0.56.1"
+version = "0.57.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9671433f611421295e6a5126fae3ab5e748b765dad3c34f911fce4b8c0f02ae2"
-dependencies = [
- "aws-smithy-http",
- "aws-smithy-types",
- "aws-types",
- "http",
- "regex",
- "tracing",
-]
+checksum = "e1b55a746a361717aedd15c69b9f115e4b8d525c03cf9890c6cdbab09a27a543"
 
 [[package]]
 name = "aws-http"
