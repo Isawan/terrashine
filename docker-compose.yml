@@ -44,7 +44,7 @@ services:
       AWS_DEFAULT_REGION: us-east-1
 
   generate-certificates:
-    image: docker.io/alpine/openssl@sha256:b00778d39deb0a848cd5afa15ede96f2051788134f10192371414901a4351c97
+    image: docker.io/alpine/openssl@sha256:346592a17aa3b057c765db682785c88988e695c69b90b254d53fd47a42c4abbb
     entrypoint: /mnt/scripts/generate-test-certificate
     working_dir: /mnt/
     volumes:
