@@ -57,7 +57,7 @@ sqlx = { version = "^0.7.2", features = [
     "postgres",
 ] }
 tokio-stream = "^0.1.14"
-aws-config = { version = "0.56.1" }
+aws-config = { version = "1.0.1" }
 aws-endpoint = "0.60.0"
 futures = "0.3.29"
 humantime = "2.1.0"
