@@ -7,16 +7,25 @@ mod refresh;
 mod registry;
 
 use app::AppState;
+use aws_config::BehaviorVersion;
+use axum::extract::Request;
 use axum_prometheus::metrics_exporter_prometheus::PrometheusHandle;
 use config::Args;
+use hyper::body::Incoming;
+use hyper_util::{
+    rt::{TokioExecutor, TokioIo},
+    server,
+};
 use reqwest::Client;
 use sqlx::postgres::PgPoolOptions;
 use std::{net::SocketAddr, time::Duration};
 use tokio::{
+    net::TcpListener,
     select,
     sync::{mpsc, oneshot::Sender},
 };
 use tokio_util::sync::CancellationToken;
+use tower::Service;
 use tracing::error;
 
 use crate::{
@@ -26,6 +35,38 @@ use crate::{
 #[derive(Debug)]
 pub struct StartUpNotify {
     pub bind_socket: SocketAddr,
+}
+
+async fn serve(listener: TcpListener, app: axum::Router) {
+    loop {
+        let (socket, _remote_addr) = listener.accept().await.unwrap();
+
+        let tower_service = app.clone();
+
+        // Spawn a task to handle the connection. That way we can multiple connections
+        // concurrently.
+        tokio::spawn(async move {
+            let socket = TokioIo::new(socket);
+
+            // Hyper also has its own `Service` trait and doesn't use tower. We can use
+            // `hyper::service::service_fn` to create a hyper `Service` that calls our app through
+            // `tower::Service::call`.
+            let hyper_service = hyper::service::service_fn(move |request: Request<Incoming>| {
+                // We have to clone `tower_service` because hyper's `Service` uses `&self` whereas
+                // tower's `Service` requires `&mut self`.
+                //
+                // We don't need to call `poll_ready` since `Router` is always ready.
+                tower_service.clone().call(request)
+            });
+
+            if let Err(err) = server::conn::auto::Builder::new(TokioExecutor::new())
+                .serve_connection(socket, hyper_service)
+                .await
+            {
+                tracing::warn!("failed to serve connection: {err:#}");
+            }
+        });
+    }
 }
 
 pub async fn run(
@@ -38,7 +79,9 @@ pub async fn run(
 
     // path style required for minio to work
     // Set up AWS SDK
-    let aws_config = aws_config::from_env().load().await;
+    let aws_config = aws_config::defaults(BehaviorVersion::v2023_11_09())
+        .load()
+        .await;
     let mut s3_config = aws_sdk_s3::config::Builder::from(&aws_config).force_path_style(true);
     if let Some(endpoint) = &config.s3_endpoint {
         s3_config = s3_config.endpoint_url(endpoint.as_str());
@@ -94,11 +137,13 @@ pub async fn run(
         metric_handle,
     );
 
-    let server = axum::Server::bind(&bind_addr).serve(app.into_make_service());
+    let listener = TcpListener::bind(&bind_addr).await.unwrap();
+    let local_addr = listener.local_addr().unwrap();
+    let server = serve(listener, app);
 
     startup
         .send(StartUpNotify {
-            bind_socket: server.local_addr(),
+            bind_socket: local_addr,
         })
         .expect("Sender channel has already been used");
 
