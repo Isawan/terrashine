@@ -377,5 +377,5 @@ async fn presign_request(
         .key(artifact.to_s3_key(bucket_prefix))
         .presigned(PresigningConfig::expires_in(expires_in)?)
         .await?;
-    Ok(presigned_request.uri().clone())
+    Ok(presigned_request.uri().parse::<Uri>()?)
 }

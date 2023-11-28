@@ -116,7 +116,7 @@ mod tests {
                         "token": "password1"
                     }
                 }"#
-                .into(),
+                .to_string(),
             )
             .unwrap();
         let response = routes(state).oneshot(request).await.unwrap();
@@ -205,7 +205,7 @@ mod tests {
                         "token": "password1"
                     }
                 }"#
-                .into(),
+                .to_string(),
             )
             .unwrap();
         let response = routes(state).oneshot(request).await.unwrap();
