@@ -72,7 +72,7 @@ hyper-util = { version = "0.1.1", features = [
 ] }
 
 [dev-dependencies]
-axum-macros = "0.3.8"
+axum-macros = "0.4.0"
 tempfile = "3.8.1"
 tracing-test = { version = "0.2.4", features = ["no-env-filter"] }
 uuid = { version = "1.6.1", features = ["v4"] }
