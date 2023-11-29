@@ -17,6 +17,16 @@
             "automerge": true,
         },
         {
+            "matchPackageNames": [
+                "url",
+            ],
+            "automerge": true,
+        },
+        {
+            "extends": ["monorepo:aws-sdk-rust"],
+            "automerge": true,
+        },
+        {
             "matchManagers": [
                 "docker-compose",
                 "github-actions",

@@ -230,12 +230,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aws-endpoint"
-version = "0.60.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fee6509c2eb6409945ab71466d7ef184f361145708f758dfbe6a32fde30b8f03"
-
-[[package]]
 name = "aws-http"
 version = "0.60.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3034,7 +3028,6 @@ dependencies = [
  "anyhow",
  "async-trait",
  "aws-config",
- "aws-endpoint",
  "aws-sdk-s3",
  "axum",
  "axum-macros",
