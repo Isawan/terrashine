@@ -2,7 +2,7 @@ version: "3.9"
 services:
 
   postgres:
-    image: docker.io/library/postgres:16-alpine@sha256:b20880f6cf45a3a82ebf3ff67455982e991f91ccc4bd9b30e2ea0ada795aa228
+    image: docker.io/library/postgres:16-alpine@sha256:826d0a208173d27e55f3768ea358c3135fc1b6e0a3f66ceda762532285464f91
     network_mode: host
     # ports:
     #   - "5432:5432"
