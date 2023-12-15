@@ -2,7 +2,7 @@ version: "3.9"
 services:
 
   postgres:
-    image: docker.io/library/postgres:16-alpine@sha256:06df4613af1b838dfc07a8ae409735589396241a02465d5f83fe585f0e3abbb5
+    image: docker.io/library/postgres:16-alpine@sha256:498f3caaf3f3710b5136097d072c1132f5f2b0809a964fdf18e7e100a261af54
     network_mode: host
     # ports:
     #   - "5432:5432"
@@ -13,7 +13,7 @@ services:
       POSTGRES_PASSWORD: password
 
   minio:
-    image: quay.io/minio/minio:latest@sha256:a9cec9ed5bda5b4e1b2153823e01b309965b9de7ed6eb7f098d45592eecdfc78
+    image: quay.io/minio/minio:latest@sha256:62bffc26326ee5c841d7774b1c94712953d315ee5ca603c124206cabc77681d5
     command: [ "server", "/data", "--console-address", ":9001" ]
     network_mode: host
     # ports:
