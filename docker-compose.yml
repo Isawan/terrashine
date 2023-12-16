@@ -2,7 +2,7 @@ version: "3.9"
 services:
 
   postgres:
-    image: docker.io/library/postgres:16-alpine@sha256:498f3caaf3f3710b5136097d072c1132f5f2b0809a964fdf18e7e100a261af54
+    image: docker.io/library/postgres:16-alpine@sha256:a1b267d05ee39210d162185f52645687c7e63fbe25b8c58ccd7f81f0a7e2ad97
     network_mode: host
     # ports:
     #   - "5432:5432"
@@ -44,7 +44,7 @@ services:
       AWS_DEFAULT_REGION: us-east-1
 
   generate-certificates:
-    image: docker.io/alpine/openssl@sha256:fd7e287d9fcc7d7e1b3eb9ff39b0b19e7f037522fa57a1fe7e8318cea12afbf1
+    image: docker.io/alpine/openssl@sha256:1bfc47fe1472173727c9d06d47d133560b75c5c556ab357248f633c96662ff6e
     entrypoint: /mnt/scripts/generate-test-certificate
     working_dir: /mnt/
     volumes:
