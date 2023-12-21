@@ -56,7 +56,7 @@ services:
         type: bind
 
   nginx:
-    image: docker.io/library/nginx@sha256:bd30b8d47b230de52431cc71c5cce149b8d5d4c87c204902acf2504435d4b4c9
+    image: docker.io/library/nginx@sha256:2bdc49f2f8ae8d8dc50ed00f2ee56d00385c6f8bc8a8b320d0a294d9e3b49026
     network_mode: host
     volumes:
       - ./resources/test/nginx:/etc/nginx:ro
