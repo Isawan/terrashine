@@ -2,7 +2,7 @@ version: "3.9"
 services:
 
   postgres:
-    image: docker.io/library/postgres:16-alpine@sha256:a1b267d05ee39210d162185f52645687c7e63fbe25b8c58ccd7f81f0a7e2ad97
+    image: docker.io/library/postgres:16-alpine@sha256:17eb369d9330fe7fbdb2f705418c18823d66322584c77c2b43cc0e1851d01de7
     network_mode: host
     # ports:
     #   - "5432:5432"
@@ -13,7 +13,7 @@ services:
       POSTGRES_PASSWORD: password
 
   minio:
-    image: quay.io/minio/minio:latest@sha256:47d5b01cc3020efa39aac112a7cbc919af5fb18f9ebc63bda31683590715c42b
+    image: quay.io/minio/minio:latest@sha256:edc89479d70f1c9ff39a3218bc4a29eb6df21db884ce7eba5e9af017a8000949
     command: [ "server", "/data", "--console-address", ":9001" ]
     network_mode: host
     # ports:
@@ -26,7 +26,7 @@ services:
   aws-cli:
     depends_on:
       - minio
-    image: docker.io/amazon/aws-cli@sha256:f19327a85873b9f45ace9ad2d278a8f15b9a7b55f7fb6dfb471dbe48908b8f4f
+    image: docker.io/amazon/aws-cli@sha256:a0c252c1822e1e484dcb4025ac4a6f765007b7b4ea57db1f09ada597e093df5c
     entrypoint: aws
     network_mode: host
     command:
@@ -44,7 +44,7 @@ services:
       AWS_DEFAULT_REGION: us-east-1
 
   generate-certificates:
-    image: docker.io/alpine/openssl@sha256:84796aaf612c73a213e495e97f22a764569fab1398f159d469f273a69f0e7149
+    image: docker.io/alpine/openssl@sha256:280a5dd26eec4b529bd929b69492b3df562eccc6ac364b99fc5f04d2a64381a6
     entrypoint: /mnt/scripts/generate-test-certificate
     working_dir: /mnt/
     volumes:
@@ -56,7 +56,7 @@ services:
         type: bind
 
   nginx:
-    image: docker.io/library/nginx@sha256:2bdc49f2f8ae8d8dc50ed00f2ee56d00385c6f8bc8a8b320d0a294d9e3b49026
+    image: docker.io/library/nginx@sha256:5f44022eab9198d75939d9eaa5341bc077eca16fa51d4ef32d33f1bd4c8cbe7d
     network_mode: host
     volumes:
       - ./resources/test/nginx:/etc/nginx:ro
