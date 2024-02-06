@@ -72,7 +72,7 @@ fn archive_name(os: &str, arch: &str) -> String {
 
 fn build_url(base_url: String, id: i64) -> String {
     let mut s = base_url;
-    s.push_str("mirror/v1/artifacts/");
+    s.push_str("artifacts/");
     s.push_str(&id.to_string());
     s
 }
