@@ -19,6 +19,13 @@
         {
             "matchPackageNames": [
                 "url",
+                "clap",
+                "tempfile",
+                "futures",
+                "anyhow",
+                "async-trait",
+                "reqwest",
+                "thiserror",
             ],
             "automerge": true,
         },
