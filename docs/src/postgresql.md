@@ -1,0 +1,18 @@
+# PostgreSQL
+
+Terrashine requires postgreSQL to store metadata associated with upstream registries and downloaded terraform providers.
+Terrashine does not store any terraform providers inside of postgreSQL itself so the requirements are typically fairly light.
+
+Please see postgreSQL's [excellent documentation](https://www.postgresql.org/docs/16/admin.html) to set up the database.
+
+## Database migrations
+
+When upgrading or starting up terrashine for the first time, we need to run database migrations against the database.
+For this, you'll need the [sqlx](https://github.com/launchbadge/sqlx) migration tool.
+We can perform the migration with the following command.
+
+``` bash
+sqlx migrate run --database-url postgres://postgres:password@localhost/
+```
+
+This command should be executed from a checkout of the git repository associated with the version.

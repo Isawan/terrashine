@@ -3,6 +3,7 @@ mod util;
 
 use std::{
     net::{IpAddr, Ipv6Addr, SocketAddr},
+    path::Path,
     process::Stdio,
     str::from_utf8,
     time::Duration,
@@ -92,15 +93,14 @@ fn test_end_to_end_terraform_flow(_: PoolOptions<Postgres>, db_options: PgConnec
         copy_dir("resources/test/terraform/random-import-stack", &folder)
             .expect("Could not copy folder");
         let temp_folder = folder.path().to_str().expect("Could not get tempdir path");
+        let config_path = format!("{temp_folder}/terraform.tfrc");
+        assert!(Path::new(&config_path).exists());
 
         let mut terraform = tokio::process::Command::new("terraform");
         let process = terraform
             .arg(format!("-chdir={temp_folder}"))
             .arg("init")
-            .env(
-                "TF_CLI_CONFIG_FILE",
-                format!("{temp_folder}/terraform.tfrc"),
-            )
+            .env("TF_CLI_CONFIG_FILE", config_path)
             .kill_on_drop(true)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
