@@ -75,7 +75,7 @@ hyper-util = { version = "0.1.1", features = [
 axum-macros = "0.4.0"
 tempfile = "3.10.0"
 tracing-test = { version = "0.2.4", features = ["no-env-filter"] }
-uuid = { version = "1.6.1", features = ["v4"] }
+uuid = { version = "1.7.0", features = ["v4"] }
 
 [build]
 rustflags = ["--cfg", "tokio_unstable"]
