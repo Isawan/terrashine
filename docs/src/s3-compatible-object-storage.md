@@ -6,7 +6,7 @@ To set up AWS S3, please follow the AWS instruction to [create a bucket and obta
 
 Terrashine requires a bucket to be created and a set of credentials to be available.
 The AWS Rust SDK is used to authenticate to S3 so the credentials can be provided to the binary using any supported credential provider.
-Most commonly, this can be provided using the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_KEY_ID` environment variables.
+Most commonly, this can be provided using the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables.
 
 Terrashine requires the following actions in the IAM policy:
 
