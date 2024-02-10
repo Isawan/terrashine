@@ -13,7 +13,7 @@ services:
       POSTGRES_PASSWORD: password
 
   minio:
-    image: quay.io/minio/minio:latest@sha256:1f5e263a492659da3b5c165eeabe70fac1c186081d3fca6863fdc48c3e04856c
+    image: quay.io/minio/minio:latest@sha256:68622c3e49dd98fbbcb8200729297207759d52e3b02d2ed908c1a7ff3b83f3f7
     command: [ "server", "/data", "--console-address", ":9001" ]
     network_mode: host
     # ports:
@@ -26,7 +26,7 @@ services:
   aws-cli:
     depends_on:
       - minio
-    image: docker.io/amazon/aws-cli@sha256:5d17314e4bbf1068719c4bcba85243488d973afdf78d6e8ff5ff80ef2714f0a4
+    image: docker.io/amazon/aws-cli@sha256:2f465530a677d716db579d3ca85c38bda9f1f75f83e72012096440f540cb0640
     entrypoint: aws
     network_mode: host
     command:
@@ -44,7 +44,7 @@ services:
       AWS_DEFAULT_REGION: us-east-1
 
   generate-certificates:
-    image: docker.io/alpine/openssl@sha256:280a5dd26eec4b529bd929b69492b3df562eccc6ac364b99fc5f04d2a64381a6
+    image: docker.io/alpine/openssl@sha256:238afa540e9753f498ea231b724a448d01cad037832a3ab40895a346c96cd781
     entrypoint: /mnt/scripts/generate-test-certificate
     working_dir: /mnt/
     volumes:
