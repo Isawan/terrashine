@@ -16,7 +16,7 @@ path = "integration/main.rs"
 [dependencies]
 anyhow = "^1.0.79"
 aws-sdk-s3 = { version = "^1.15.0" }
-axum = { version = "^0.7.2", features = ["http2", "json", "tracing"] }
+axum = { version = "^0.7.4", features = ["http2", "json", "tracing"] }
 clap = { version = "^4.5.0", features = [
     "derive",
     "env",
