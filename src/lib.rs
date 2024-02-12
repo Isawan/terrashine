@@ -16,7 +16,7 @@ use hyper_util::{
     rt::{TokioExecutor, TokioIo},
     server,
 };
-use reqwest::Client;
+use reqwest::{Certificate, Client};
 use sqlx::postgres::PgPoolOptions;
 use std::{net::SocketAddr, time::Duration};
 use tokio::{
@@ -77,6 +77,15 @@ pub async fn run(
 ) -> Result<(), ()> {
     let (tx, rx) = mpsc::channel(10000);
 
+    // Get system certificates
+    let certificates = match rustls_native_certs::load_native_certs() {
+        Ok(certificates) => certificates,
+        Err(error) => {
+            error!(reason = %error, "Could not load system certificates, exiting.");
+            return Err(());
+        }
+    };
+
     // path style required for minio to work
     // Set up AWS SDK
     let aws_config = aws_config::defaults(BehaviorVersion::v2023_11_09())
@@ -103,9 +112,13 @@ pub async fn run(
     };
 
     // Set up HTTP pool
-    let http_builder = Client::builder()
+    let mut http_builder = Client::builder()
         .connect_timeout(Duration::from_secs(10))
         .timeout(Duration::from_secs(60));
+    for cert in certificates.iter() {
+        http_builder = http_builder
+            .add_root_certificate(Certificate::from_der(cert.as_ref()).expect("Not a certificate"));
+    }
     let http = match http_builder.build() {
         Ok(client) => client,
         Err(error) => {
