@@ -13,7 +13,7 @@ services:
       POSTGRES_PASSWORD: password
 
   minio:
-    image: quay.io/minio/minio:latest@sha256:68622c3e49dd98fbbcb8200729297207759d52e3b02d2ed908c1a7ff3b83f3f7
+    image: quay.io/minio/minio:latest@sha256:1c1c40181db76a20f0cf5e37caf46525b28e8cfd2c6dbcb36bf17eb41ebd92da
     command: [ "server", "/data", "--console-address", ":9001" ]
     network_mode: host
     # ports:
