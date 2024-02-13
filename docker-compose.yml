@@ -13,7 +13,7 @@ services:
       POSTGRES_PASSWORD: password
 
   minio:
-    image: quay.io/minio/minio:latest@sha256:1c1c40181db76a20f0cf5e37caf46525b28e8cfd2c6dbcb36bf17eb41ebd92da
+    image: quay.io/minio/minio:latest@sha256:b05b6e8f65d818137f561bce9bb25edf701df5446e504f2321da7e8be24a034c
     command: [ "server", "/data", "--console-address", ":9001" ]
     network_mode: host
     # ports:
@@ -56,7 +56,7 @@ services:
         type: bind
 
   nginx:
-    image: docker.io/library/nginx@sha256:84c52dfd55c467e12ef85cad6a252c0990564f03c4850799bf41dd738738691f
+    image: docker.io/library/nginx@sha256:ea97e6aace270d82c73da382ea1a8c42d44b9dc11b55159104e21c49c687e7fb
     network_mode: host
     volumes:
       - ./resources/test/nginx:/etc/nginx:ro
