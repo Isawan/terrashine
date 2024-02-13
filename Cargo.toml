@@ -26,8 +26,8 @@ clap = { version = "^4.5.0", features = [
 http = "^1.0.0"
 hyper = { version = "^1.1.0", features = ["full"] }
 lazy_static = "1.4.0"
-reqwest = { version = "0.11.24", features = [
-    "rustls-tls-native-roots",
+reqwest = { version = "0.11.24", default-features = false, features = [
+    "rustls-tls-manual-roots",
     "gzip",
     "deflate",
     "brotli",
@@ -53,7 +53,7 @@ url = { version = "^2.5.0", features = ["serde"] }
 tokio = { version = "^1.36.0", features = ["full"] }
 sqlx = { version = "^0.7.3", features = [
     "runtime-tokio",
-    "tls-native-tls",
+    "tls-rustls",
     "postgres",
 ] }
 tokio-stream = "^0.1.14"
@@ -70,6 +70,7 @@ hyper-util = { version = "0.1.1", features = [
     "server",
     "server-auto",
 ] }
+rustls-native-certs = "0.7.0"
 
 [dev-dependencies]
 axum-macros = "0.4.0"
@@ -79,6 +80,7 @@ uuid = { version = "1.7.0", features = ["v4"] }
 
 [build]
 rustflags = ["--cfg", "tokio_unstable"]
+target = "x86_64-unknown-linux-musl"
 
 [profile.release]
 debug = 1
