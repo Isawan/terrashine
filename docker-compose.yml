@@ -44,7 +44,7 @@ services:
       AWS_DEFAULT_REGION: us-east-1
 
   generate-certificates:
-    image: docker.io/alpine/openssl@sha256:238afa540e9753f498ea231b724a448d01cad037832a3ab40895a346c96cd781
+    image: docker.io/alpine/openssl@sha256:02781bdcc7162ece75aa479dc2d9043bf24f3a10397c20c7e82f793600da8163
     entrypoint: /mnt/scripts/generate-test-certificate
     working_dir: /mnt/
     volumes:
@@ -56,7 +56,7 @@ services:
         type: bind
 
   nginx:
-    image: docker.io/library/nginx@sha256:ac2b22fdbe4c13e6f3be8c5fe9a19677aa7614acaa1cbf5d354af723873cbd28
+    image: docker.io/library/nginx@sha256:2f5b3c68024b82d902793a2611f78bad115d14e1f3165c7918772a1fe569656f
     network_mode: host
     volumes:
       - ./resources/test/nginx:/etc/nginx:ro
