@@ -4,8 +4,6 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use async_trait::async_trait;
-
 use super::{types::Credential, CredentialHelper};
 
 // Credential helper implementation by storing in the database
@@ -28,7 +26,6 @@ impl Default for MemoryCredentials {
     }
 }
 
-#[async_trait]
 impl CredentialHelper for MemoryCredentials {
     async fn get(&self, hostname: impl AsRef<str> + Send) -> Result<Credential, anyhow::Error> {
         let map = self.map.try_read().map_err(|_| {

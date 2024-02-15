@@ -1,6 +1,5 @@
 use std::marker::Send;
 
-use async_trait::async_trait;
 use sqlx::PgPool;
 
 use super::{types::Credential, CredentialHelper};
@@ -17,7 +16,6 @@ impl DatabaseCredentials {
     }
 }
 
-#[async_trait]
 impl CredentialHelper for DatabaseCredentials {
     async fn get(&self, hostname: impl AsRef<str> + Send) -> Result<Credential, anyhow::Error> {
         let query = sqlx::query!(

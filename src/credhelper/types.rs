@@ -1,4 +1,4 @@
-use async_trait::async_trait;
+use futures::Future;
 use reqwest::RequestBuilder;
 use std::marker::Send;
 
@@ -8,24 +8,35 @@ pub enum Credential {
     Entry(Option<String>),
 }
 
-#[async_trait]
 pub trait CredentialHelper: Sync {
-    async fn get(&self, hostname: impl AsRef<str> + Send) -> Result<Credential, anyhow::Error>;
-    async fn store(&mut self, hostname: String, cred: String) -> Result<(), anyhow::Error>;
+    fn get(
+        &self,
+        hostname: impl AsRef<str> + Send,
+    ) -> impl Future<Output = Result<Credential, anyhow::Error>> + Send;
+    fn store(
+        &mut self,
+        hostname: String,
+        cred: String,
+    ) -> impl Future<Output = Result<(), anyhow::Error>> + Send;
 
     /// Forget a credential.
     /// NOTE: Deleting a non-existing credential is not an error
-    async fn forget(&mut self, hostname: impl AsRef<str> + Send) -> Result<(), anyhow::Error>;
+    fn forget(
+        &mut self,
+        hostname: impl AsRef<str> + Send,
+    ) -> impl Future<Output = Result<(), anyhow::Error>> + Send;
 
-    async fn transform(
+    fn transform(
         &self,
         request: RequestBuilder,
         hostname: impl AsRef<str> + Send,
-    ) -> Result<RequestBuilder, anyhow::Error> {
-        match self.get(hostname).await? {
-            Credential::NotFound => Ok(request),
-            Credential::Entry(None) => Ok(request),
-            Credential::Entry(Some(token)) => Ok(request.bearer_auth(token)),
+    ) -> impl std::future::Future<Output = Result<RequestBuilder, anyhow::Error>> + Send {
+        async {
+            match self.get(hostname).await? {
+                Credential::NotFound => Ok(request),
+                Credential::Entry(None) => Ok(request),
+                Credential::Entry(Some(token)) => Ok(request.bearer_auth(token)),
+            }
         }
     }
 }
