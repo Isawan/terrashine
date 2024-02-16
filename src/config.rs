@@ -120,7 +120,7 @@ mod tests {
     // Validate clap CLI parsing
     #[tokio::test]
     async fn test_clap_cli_parsing() {
-        let _ = Args::try_parse_from(&[
+        let _ = Args::try_parse_from([
             "./terrashine",
             "--http-redirect-url",
             "https://example.com/",
