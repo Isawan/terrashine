@@ -2,3 +2,7 @@
 AXUM_HTTP_REQUESTS_TOTAL = "terrashine_http_requests_total"
 AXUM_HTTP_REQUESTS_DURATION_SECONDS = "terrashine_http_requests_duration_seconds"
 AXUM_HTTP_REQUESTS_PENDING = "terrashine_http_requests_pending"
+
+[build]
+rustflags = ["--cfg", "tokio_unstable"]
+target = "x86_64-unknown-linux-musl"
