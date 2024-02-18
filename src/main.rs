@@ -3,10 +3,14 @@ use axum_prometheus::{
     AXUM_HTTP_REQUESTS_DURATION_SECONDS,
 };
 use clap::Parser;
+use jemallocator::Jemalloc;
 use terrashine::{config::Args, run};
 use tokio::{select, signal::unix::SignalKind, task};
 use tokio_util::sync::CancellationToken;
 use tracing_subscriber::EnvFilter;
+
+#[global_allocator]
+static GLOBAL: Jemalloc = Jemalloc;
 
 #[tokio::main]
 async fn main() {
