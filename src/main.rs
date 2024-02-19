@@ -37,8 +37,11 @@ async fn main() {
     let cancel = CancellationToken::new();
     let (tx, rx) = tokio::sync::oneshot::channel();
     let handle = task::spawn(run(args, Some(metric_handle), cancel.child_token(), tx));
-    rx.await.unwrap();
-    tracing::info!("Server ready");
+
+    // Either wait until the server is ready or complete
+    if (rx.await).is_ok() {
+        tracing::info!("Server ready");
+    }
 
     select! {
         _ = handle => tracing::info!("Server shutdown"),

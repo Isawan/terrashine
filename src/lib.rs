@@ -3,6 +3,7 @@ pub mod config;
 pub mod credhelper;
 mod error;
 mod http;
+mod migrate;
 mod refresh;
 mod registry;
 
@@ -16,6 +17,7 @@ use hyper_util::{
     rt::{TokioExecutor, TokioIo},
     server,
 };
+use migrate::run_migrate;
 use reqwest::{Certificate, Client};
 use sqlx::postgres::PgPoolOptions;
 use std::{net::SocketAddr, time::Duration};
@@ -77,6 +79,7 @@ pub async fn run(
 ) -> Result<(), ()> {
     match config {
         Args::Server(args) => run_server(args, metric_handle, cancel, startup).await,
+        Args::Migrate(args) => run_migrate(args).await,
     }
 }
 
