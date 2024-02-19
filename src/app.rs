@@ -12,7 +12,7 @@ use tracing::Level;
 
 use crate::http::api::APIState;
 use crate::{
-    config::Args,
+    config::ServerArgs,
     credhelper::{database::DatabaseCredentials, CredentialHelper},
     http::artifacts::artifacts_handler,
     http::healthcheck::healthcheck_handler,
@@ -28,14 +28,14 @@ pub(crate) struct AppState<C> {
     pub(crate) http_client: reqwest::Client,
     pub(crate) db_client: Pool<Postgres>,
     pub(crate) registry_client: RegistryClient<DatabaseCredentials>,
-    pub(crate) config: Args,
+    pub(crate) config: ServerArgs,
     pub(crate) refresher_tx: mpsc::Sender<RefreshRequest>,
     pub(crate) credentials: C,
 }
 
 impl<C> AppState<C> {
     pub(crate) fn new(
-        config: Args,
+        config: ServerArgs,
         s3: aws_sdk_s3::Client,
         db: Pool<Postgres>,
         http: reqwest::Client,

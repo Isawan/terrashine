@@ -10,7 +10,7 @@ use app::AppState;
 use aws_config::BehaviorVersion;
 use axum::extract::Request;
 use axum_prometheus::metrics_exporter_prometheus::PrometheusHandle;
-use config::Args;
+use config::{Args, ServerArgs};
 use hyper::body::Incoming;
 use hyper_util::{
     rt::{TokioExecutor, TokioIo},
@@ -71,6 +71,17 @@ async fn serve(listener: TcpListener, app: axum::Router) {
 
 pub async fn run(
     config: Args,
+    metric_handle: Option<PrometheusHandle>,
+    cancel: CancellationToken,
+    startup: Sender<StartUpNotify>,
+) -> Result<(), ()> {
+    match config {
+        Args::Server(args) => run_server(args, metric_handle, cancel, startup).await,
+    }
+}
+
+pub async fn run_server(
+    config: ServerArgs,
     metric_handle: Option<PrometheusHandle>,
     cancel: CancellationToken,
     startup: Sender<StartUpNotify>,
