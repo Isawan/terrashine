@@ -28,12 +28,13 @@ fn parse_humantime(s: &str) -> Result<Duration, anyhow::Error> {
 
 #[derive(Parser, Debug, Clone)]
 #[command(author, version, about, long_about = None)]
+#[allow(clippy::large_enum_variant)]
 pub enum Args {
     Server(ServerArgs),
+    Migrate(MigrateArgs),
 }
 
 #[derive(clap::Args, Debug, Clone)]
-#[command(author, version, about, long_about = None)]
 pub struct ServerArgs {
     /// Socket to listen on
     ///
@@ -103,6 +104,17 @@ pub struct ServerArgs {
         hide = true
     )]
     pub upstream_registry_port: u16,
+}
+
+#[derive(clap::Args, Debug, Clone)]
+pub struct MigrateArgs {
+    /// Database connection URI
+    #[arg(
+        long,
+        default_value = "postgres://postgres:password@localhost/",
+        env = "TERRASHINE_DATABASE_URL"
+    )]
+    pub database_url: PgConnectOptions,
 }
 
 // implement test
