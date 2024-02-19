@@ -16,5 +16,5 @@ A TLS terminating reverse proxy hosted is on `example.com` in this setup.
 Note that the `/mirror/v1/`  path is required in the URL to allow the backend server to serve up redirects correctly.
 
 ```
-AWS_REGION=eu-west-1 AWS_ACCESS_KEY_ID=xxx AWS_SECRET_ACCESS_KEY=xxx RUST_LOG=info  ./terrashine  --s3-bucket-name terrashine-example-test-1111  --http-redirect-url https://example.com/mirror/v1/
+AWS_REGION=eu-west-1 AWS_ACCESS_KEY_ID=xxx AWS_SECRET_ACCESS_KEY=xxx RUST_LOG=info  ./terrashine  server --s3-bucket-name terrashine-example-test-1111  --http-redirect-url https://example.com/mirror/v1/
 ```

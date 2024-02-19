@@ -12,7 +12,7 @@ use std::{
 use crate::util::copy_dir;
 use reqwest::StatusCode;
 use sqlx::{pool::PoolOptions, postgres::PgConnectOptions, Postgres};
-use terrashine::{self, config::Args};
+use terrashine::{self, config::ServerArgs};
 use tokio::select;
 use tracing_test::traced_test;
 use url::Url;
@@ -22,7 +22,7 @@ use uuid::Uuid;
 #[sqlx::test]
 fn test_server_startup(_: PoolOptions<Postgres>, db_options: PgConnectOptions) {
     let prefix = format!("{}/", Uuid::new_v4());
-    let config = Args {
+    let config = ServerArgs {
         database_url: db_options,
         database_pool: 3,
         s3_bucket_name: "terrashine".to_string(),
@@ -35,7 +35,7 @@ fn test_server_startup(_: PoolOptions<Postgres>, db_options: PgConnectOptions) {
     };
     let cancellation_token = tokio_util::sync::CancellationToken::new();
     let (tx, rx) = tokio::sync::oneshot::channel();
-    let handle = tokio::spawn(terrashine::run(
+    let handle = tokio::spawn(terrashine::run_server(
         config,
         None,
         cancellation_token.child_token(),
@@ -61,7 +61,7 @@ fn test_server_startup(_: PoolOptions<Postgres>, db_options: PgConnectOptions) {
 #[sqlx::test]
 fn test_end_to_end_terraform_flow(_: PoolOptions<Postgres>, db_options: PgConnectOptions) {
     let prefix = format!("{}/", Uuid::new_v4());
-    let config = Args {
+    let config = ServerArgs {
         database_url: db_options,
         database_pool: 3,
         s3_bucket_name: "terrashine".to_string(),
@@ -74,7 +74,7 @@ fn test_end_to_end_terraform_flow(_: PoolOptions<Postgres>, db_options: PgConnec
     };
     let cancellation_token = tokio_util::sync::CancellationToken::new();
     let (tx, rx) = tokio::sync::oneshot::channel();
-    let handle = tokio::spawn(terrashine::run(
+    let handle = tokio::spawn(terrashine::run_server(
         config,
         None,
         cancellation_token.child_token(),

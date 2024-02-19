@@ -28,7 +28,13 @@ fn parse_humantime(s: &str) -> Result<Duration, anyhow::Error> {
 
 #[derive(Parser, Debug, Clone)]
 #[command(author, version, about, long_about = None)]
-pub struct Args {
+pub enum Args {
+    Server(ServerArgs),
+}
+
+#[derive(clap::Args, Debug, Clone)]
+#[command(author, version, about, long_about = None)]
+pub struct ServerArgs {
     /// Socket to listen on
     ///
     /// The host and port to bind the HTTP service
@@ -122,6 +128,7 @@ mod tests {
     async fn test_clap_cli_parsing() {
         let _ = Args::try_parse_from([
             "./terrashine",
+            "server",
             "--http-redirect-url",
             "https://example.com/",
             "--s3-bucket-name",
