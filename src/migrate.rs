@@ -19,9 +19,11 @@ pub async fn run_migrate(config: MigrateArgs) -> Result<(), ()> {
         }
     };
 
-    sqlx::migrate!("./migrations").run(&db).await.map_err(|e| {
-        tracing::error!(?e, "Failed to run migrations");
-    })?;
-
-    Ok(())
+    match sqlx::migrate!("./migrations").run(&db).await {
+        Ok(()) => Ok(()),
+        Err(error) => {
+            error!(reason = %error, "Could not run migrations, exiting.");
+            Err(())
+        }
+    }
 }
