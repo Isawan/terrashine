@@ -52,7 +52,7 @@ async fn main() -> Result<(), ()> {
         tracing::info!("Server ready");
     }
 
+    let result = handle.await.unwrap();
     tracing::info!("Server shutdown");
-
-    handle.await.unwrap()
+    result
 }
