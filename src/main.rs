@@ -13,7 +13,7 @@ use tracing_subscriber::EnvFilter;
 static GLOBAL: Jemalloc = Jemalloc;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), ()> {
     let args = Args::parse();
 
     tracing_subscriber::fmt()
@@ -38,16 +38,21 @@ async fn main() {
     let (tx, rx) = tokio::sync::oneshot::channel();
     let handle = task::spawn(run(args, Some(metric_handle), cancel.child_token(), tx));
 
+    let _handle_signal = task::spawn(async move {
+        select! {
+            _ = sigterm.recv() => tracing::info!("Received SIGTERM"),
+            _ = sigint.recv() => tracing::info!("Received SIGINT"),
+        }
+        tracing::info!("Terminating server");
+        cancel.cancel();
+    });
+
     // Either wait until the server is ready or complete
     if (rx.await).is_ok() {
         tracing::info!("Server ready");
     }
 
-    select! {
-        _ = handle => tracing::info!("Server shutdown"),
-        _ = sigterm.recv() => tracing::info!("Received SIGTERM"),
-        _ = sigint.recv() => tracing::info!("Received SIGINT"),
-    }
-    cancel.cancel();
-    tracing::info!("Terminating server");
+    tracing::info!("Server shutdown");
+
+    handle.await.unwrap()
 }
