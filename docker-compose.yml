@@ -26,7 +26,7 @@ services:
   aws-cli:
     depends_on:
       - minio
-    image: docker.io/amazon/aws-cli@sha256:ef3a2a16b4e361619d3ef29ffc817eee38a79c1ed770c0ddf972724d783188ea
+    image: docker.io/amazon/aws-cli@sha256:16c5a4e1022a04208561d571b36615fe207e56c725b0d83f60b63729783f4415
     entrypoint: aws
     network_mode: host
     command:
@@ -44,7 +44,7 @@ services:
       AWS_DEFAULT_REGION: us-east-1
 
   generate-certificates:
-    image: docker.io/alpine/openssl@sha256:ec09e0358f2ac922751e9fc34c9c3b10a08a8e1f5ed6c8d35b6355f06ff3b8fd
+    image: docker.io/alpine/openssl@sha256:dea4b73aabb88e7cda6f5f7c9ae6802c6e320ca2f4bd1f20408da0a185bef7e6
     entrypoint: /mnt/scripts/generate-test-certificate
     working_dir: /mnt/
     volumes:
