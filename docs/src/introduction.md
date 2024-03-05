@@ -15,6 +15,12 @@ Binary releases for x86-64 are published can be found on the [releases](https://
 
 Alternatively, the project can be built from source with the following command:
 
+On Debian-based Linux:
+```
+sudo apt install musl-tools
+rustup target add x86_64-unknown-linux-musl
+```
+
 ```
 SQLX_OFFLINE=1 cargo build --release
 ```
