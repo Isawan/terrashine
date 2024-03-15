@@ -41,7 +41,7 @@ fn test_server_startup(_: PoolOptions<Postgres>, db_options: PgConnectOptions) {
         cancellation_token.child_token(),
         tx,
     ));
-    let socket = rx.await.unwrap().bind_socket;
+    let socket = rx.await.unwrap().msg;
     select! {
         _ = handle => {
             assert!(false, "Server shutdown before client");
@@ -80,7 +80,7 @@ fn test_end_to_end_terraform_flow(_: PoolOptions<Postgres>, db_options: PgConnec
         cancellation_token.child_token(),
         tx,
     ));
-    let _ = rx.await.unwrap().bind_socket;
+    let _ = rx.await.unwrap().msg;
 
     // Set up temp folder
     let folder1 = tempfile::tempdir().expect("Could not create folder");

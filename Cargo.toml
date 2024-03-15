@@ -9,6 +9,10 @@ about = "Terraform mirroring proxy"
 name = "integration"
 path = "integration/main.rs"
 
+[[bin]]
+name = "bootstrap"
+path = "src/lambda.rs"
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -71,6 +75,7 @@ hyper-util = { version = "0.1.1", features = [
 ] }
 rustls-native-certs = "0.7.0"
 jemallocator = "0.5.4"
+lambda_http = "0.10.0"
 
 [dev-dependencies]
 axum-macros = "0.4.0"

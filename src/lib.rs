@@ -19,7 +19,7 @@ use hyper_util::{
 };
 use migrate::run_migrate;
 use reqwest::{Certificate, Client};
-use sqlx::postgres::PgPoolOptions;
+use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::{net::SocketAddr, time::Duration};
 use tokio::{
     net::TcpListener,
@@ -35,8 +35,8 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub struct StartUpNotify {
-    pub bind_socket: SocketAddr,
+pub struct StartUpNotify<T> {
+    pub msg: T,
 }
 
 async fn serve(listener: TcpListener, app: axum::Router) {
@@ -75,7 +75,7 @@ pub async fn run(
     config: Args,
     metric_handle: Option<PrometheusHandle>,
     cancel: CancellationToken,
-    startup: Sender<StartUpNotify>,
+    startup: Sender<StartUpNotify<SocketAddr>>,
 ) -> Result<(), ()> {
     match config {
         Args::Server(args) => run_server(args, metric_handle, cancel, startup).await,
@@ -83,14 +83,18 @@ pub async fn run(
     }
 }
 
-pub async fn run_server(
-    config: ServerArgs,
-    metric_handle: Option<PrometheusHandle>,
-    cancel: CancellationToken,
-    startup: Sender<StartUpNotify>,
-) -> Result<(), ()> {
-    let (tx, rx) = mpsc::channel(10000);
-
+// refactoring setup code in run_server
+pub async fn setup_server(
+    config: &ServerArgs,
+) -> Result<
+    (
+        reqwest::Client,
+        PgPool,
+        aws_sdk_s3::Client,
+        DatabaseCredentials,
+    ),
+    (),
+> {
     // Get system certificates
     let certificates = match rustls_native_certs::load_native_certs() {
         Ok(certificates) => certificates,
@@ -144,6 +148,19 @@ pub async fn run_server(
     // Set up credentials
     let credentials = DatabaseCredentials::new(db.clone());
 
+    Ok((http, db, s3, credentials))
+}
+
+pub async fn run_server(
+    config: ServerArgs,
+    metric_handle: Option<PrometheusHandle>,
+    cancel: CancellationToken,
+    startup: Sender<StartUpNotify<SocketAddr>>,
+) -> Result<(), ()> {
+    let (http, db, s3, credentials) = setup_server(&config).await.unwrap();
+
+    let (tx, rx) = mpsc::channel(10000);
+
     let refresher_db = db.clone();
     let refresher_registry = RegistryClient::new(
         config.upstream_registry_port,
@@ -160,7 +177,7 @@ pub async fn run_server(
 
     let bind_addr = config.http_listen;
     let app = app::provider_mirror_app(
-        AppState::new(config, s3, db, http, tx, credentials.clone()),
+        AppState::new(config.clone(), s3, db, http, tx, credentials.clone()),
         metric_handle,
     );
 
@@ -169,9 +186,7 @@ pub async fn run_server(
     let server = serve(listener, app);
 
     startup
-        .send(StartUpNotify {
-            bind_socket: local_addr,
-        })
+        .send(StartUpNotify { msg: local_addr })
         .expect("Sender channel has already been used");
 
     select! {
@@ -180,5 +195,47 @@ pub async fn run_server(
         _ = cancel.cancelled() => tracing::trace!("Cancellation requested"),
     }
     tracing::debug!("Shutting down server");
+    Ok(())
+}
+
+pub async fn run_lambda(
+    config: ServerArgs,
+    cancel: CancellationToken,
+    startup: Sender<StartUpNotify<()>>,
+) -> Result<(), ()> {
+    let (http, db, s3, credentials) = setup_server(&config).await.unwrap();
+
+    let (tx, rx) = mpsc::channel(10000);
+
+    let refresher_db = db.clone();
+    let refresher_registry = RegistryClient::new(
+        config.upstream_registry_port,
+        http.clone(),
+        credentials.clone(),
+    );
+    let refresher = refresher(
+        &refresher_db,
+        &refresher_registry,
+        rx,
+        config.refresh_interval,
+        cancel.child_token(),
+    );
+
+    let app = app::provider_mirror_app(
+        AppState::new(config.clone(), s3, db, http, tx, credentials.clone()),
+        None,
+    );
+
+    let server = lambda_http::run(app);
+
+    startup
+        .send(StartUpNotify { msg: () })
+        .expect("Sender channel has already been used");
+
+    select! {
+        _ = server => tracing::trace!("Lambda runtime exited"),
+        _ = refresher => tracing::trace!("Refresher exited"),
+        _ = cancel.cancelled() => tracing::trace!("Cancellation requested"),
+    }
     Ok(())
 }
