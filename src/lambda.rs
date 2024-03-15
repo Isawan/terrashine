@@ -23,15 +23,10 @@ async fn main() -> Result<(), ()> {
         .init();
 
     let cancel = CancellationToken::new();
-    let (tx, rx) = tokio::sync::oneshot::channel();
-    let handle = run_lambda(args, cancel.child_token(), tx);
-
-    // Either wait until the server is ready or complete
-    if (rx.await).is_ok() {
-        tracing::info!("Server ready");
-    }
+    let (tx, _rx) = tokio::sync::oneshot::channel();
+    let child = cancel.child_token();
+    let handle = run_lambda(args, child, tx);
 
     handle.await.unwrap();
-    tracing::info!("Server shutdown");
     Ok(())
 }

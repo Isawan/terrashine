@@ -233,10 +233,9 @@ pub async fn run_lambda(
         .expect("Sender channel has already been used");
 
     select! {
-        _ = server => (),
-        _ = refresher => (),
+        _ = server => tracing::trace!("Lambda runtime exited"),
+        _ = refresher => tracing::trace!("Refresher exited"),
         _ = cancel.cancelled() => tracing::trace!("Cancellation requested"),
     }
-    tracing::debug!("Shutting down server");
     Ok(())
 }

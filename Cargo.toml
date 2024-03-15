@@ -10,7 +10,7 @@ name = "integration"
 path = "integration/main.rs"
 
 [[bin]]
-name = "terrashine-lambda"
+name = "bootstrap"
 path = "src/lambda.rs"
 
 
