@@ -21,16 +21,23 @@ sudo apt install musl-tools
 rustup target add x86_64-unknown-linux-musl
 ```
 
-```
+## Building
+```sh
 SQLX_OFFLINE=1 cargo build --release
 ```
 
 Once built, the binary can be found at `./target/release/terrashine`
 
+## Install
+```sh
+cargo install --path .
+which terrashine
+```
+
 See the `--help` for more information:
 
-```
-./terrashine --help
+```sh
+terrashine --help
 ```
 
 # Client configuration

@@ -11,7 +11,18 @@ When upgrading or starting up terrashine for the first time, we need to run data
 We can perform the migration with the following command.
 
 ``` bash
-terrashine migrate --database-url postgres://postgres:password@localhost/
+terrashine migrate --database-url postgresql://postgres:password@localhost:5432
 ```
 
 This command should be executed from a checkout of the git repository associated with the version.
+
+## Confirm migration succeeded
+
+```bash
+docker compose exec -it postgres psql postgresql://postgres:password@localhost:5432
+```
+
+```psql
+\dt
+\q
+```
