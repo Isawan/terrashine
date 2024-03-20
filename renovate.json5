@@ -17,6 +17,26 @@
             "automerge": true,
         },
         {
+            "matchSourceUrls": [
+                "https://github.com/tokio-rs/axum",
+            ],
+            "matchUpdateTypes": [
+                "patch",
+            ],
+            "groupName": "axum",
+            "automerge": true,
+        },
+        {
+            "matchSourceUrls": [
+                "https://github.com/tower-rs/tower-http",
+            ],
+            "matchUpdateTypes": [
+	            "patch",
+            ],
+            "groupName": "tower",
+            "automerge": true,
+        },
+        {
             "matchPackageNames": [
                 "url",
                 "clap",
@@ -26,6 +46,7 @@
                 "async-trait",
                 "reqwest",
                 "thiserror",
+		"http",
             ],
             "automerge": true,
         },
