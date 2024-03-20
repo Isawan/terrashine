@@ -81,7 +81,7 @@ lambda_http = "0.10.0"
 axum-macros = "0.4.1"
 tempfile = "3.10.1"
 tracing-test = { version = "0.2.4", features = ["no-env-filter"] }
-uuid = { version = "1.7.0", features = ["v4"] }
+uuid = { version = "1.8.0", features = ["v4"] }
 
 
 [profile.release]
