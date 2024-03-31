@@ -75,7 +75,7 @@ hyper-util = { version = "0.1.1", features = [
 ] }
 rustls-native-certs = "0.7.0"
 jemallocator = "0.5.4"
-lambda_http = "0.10.0"
+lambda_http = "0.11.1"
 
 [dev-dependencies]
 axum-macros = "0.4.1"
