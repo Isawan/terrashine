@@ -19,7 +19,7 @@ path = "src/lambda.rs"
 
 [dependencies]
 anyhow = "^1.0.82"
-aws-sdk-s3 = { version = "^1.21.0" }
+aws-sdk-s3 = { version = "^1.22.0" }
 axum = { version = "^0.7.5", features = ["http2", "json", "tracing"] }
 clap = { version = "^4.5.4", features = [
     "derive",
