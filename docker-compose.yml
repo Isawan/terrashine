@@ -26,7 +26,7 @@ services:
   aws-cli:
     depends_on:
       - minio
-    image: docker.io/amazon/aws-cli@sha256:9e4f6d7ef854f0fa42c161042ddc51994ef654f5f9f66a9b41ba6d5896e9dfc0
+    image: docker.io/amazon/aws-cli@sha256:0ad4fcf33c409b843d7cd67c7b944936b1ad4ab96ad8d84baf44c8009f6cccb1
     entrypoint: aws
     network_mode: host
     command:
@@ -56,7 +56,7 @@ services:
         type: bind
 
   nginx:
-    image: docker.io/library/nginx@sha256:215c18d7ee05b5a3b440f2b8030e767550994d84d09d103a05d3a91c3b9b5283
+    image: docker.io/library/nginx@sha256:5be228548c224e43da786fc22a8edf6caec832e8ffd94ab14cb654e6880a1bb8
     network_mode: host
     volumes:
       - ./resources/test/nginx:/etc/nginx:ro
