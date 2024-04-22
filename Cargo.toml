@@ -19,7 +19,7 @@ path = "src/lambda.rs"
 
 [dependencies]
 anyhow = "^1.0.82"
-aws-sdk-s3 = { version = "^1.23.0" }
+aws-sdk-s3 = { version = "^1.24.0" }
 axum = { version = "^0.7.5", features = ["http2", "json", "tracing"] }
 clap = { version = "^4.5.4", features = [
     "derive",
@@ -61,7 +61,7 @@ sqlx = { version = "^0.7.3", features = [
     "postgres",
 ] }
 tokio-stream = "^0.1.15"
-aws-config = { version = "^1.2.0" }
+aws-config = { version = "^1.2.1" }
 futures = "0.3.30"
 humantime = "2.1.0"
 tokio-test = "0.4.4"
