@@ -87,7 +87,7 @@ jobs:
           name: lcov.unit-tests.info
           path: lcov
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@ab904c41d6ece82784817410c45d8b8c02684457 # v3
+        uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: lcov.unit-tests.info,lcov.integration-tests.info
