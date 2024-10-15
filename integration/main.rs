@@ -96,8 +96,8 @@ fn test_end_to_end_terraform_flow(_: PoolOptions<Postgres>, db_options: PgConnec
         let config_path = format!("{temp_folder}/terraform.tfrc");
         assert!(Path::new(&config_path).exists());
 
-        let mut terraform = tokio::process::Command::new("terraform");
-        let process = terraform
+        let mut opentofu = tokio::process::Command::new("opentofu");
+        let process = opentofu
             .arg(format!("-chdir={temp_folder}"))
             .arg("init")
             .env("TF_CLI_CONFIG_FILE", config_path)
