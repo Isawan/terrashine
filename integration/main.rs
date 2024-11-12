@@ -32,6 +32,7 @@ fn test_server_startup(_: PoolOptions<Postgres>, db_options: PgConnectOptions) {
         http_listen: SocketAddr::new(IpAddr::V6(Ipv6Addr::LOCALHOST), 0),
         refresh_interval: Duration::from_secs(10),
         upstream_registry_port: 443,
+        http_proxy: "",
     };
     let cancellation_token = tokio_util::sync::CancellationToken::new();
     let (tx, rx) = tokio::sync::oneshot::channel();

@@ -104,6 +104,12 @@ pub struct ServerArgs {
         hide = true
     )]
     pub upstream_registry_port: u16,
+
+    /// Proxy for downloading registry
+    ///
+    /// The address to the proxy server. For example "socks5://127.0.0.1:9150"
+    #[arg(long, default_value = "", env = "TERRASHINE_HTTP_PROXY")]
+    pub http_proxy: String,
 }
 
 #[derive(clap::Args, Debug, Clone)]
