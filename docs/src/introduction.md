@@ -26,7 +26,7 @@ rustup target add x86_64-unknown-linux-musl
 SQLX_OFFLINE=1 cargo build --release
 ```
 
-Once built, the binary can be found at `./target/release/terrashine`
+Once built, the binary can be found at `./target/x86_64-unknown-linux-musl/release/terrashine`
 
 ## Install
 ```sh
