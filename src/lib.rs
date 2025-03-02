@@ -19,7 +19,7 @@ use hyper_util::{
     server,
 };
 use migrate::run_migrate;
-use reqwest::{Certificate, Client};
+use reqwest::{Certificate, Client, Proxy};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::{net::SocketAddr, time::Duration};
 use tokio::{
@@ -155,6 +155,17 @@ pub async fn setup_server(
         http_builder = http_builder
             .add_root_certificate(Certificate::from_der(cert.as_ref()).expect("Not a certificate"));
     }
+    if let Some(proxy) = &config.http_proxy {
+        let proxy = match Proxy::all(proxy) {
+            Ok(proxy) => proxy,
+            Err(error) => {
+                error!(reason = %error, "Could not initialize proxy, exiting.");
+                return Err(());
+            }
+        };
+        let proxy = proxy.no_proxy(config.no_proxy.clone());
+        http_builder = http_builder.proxy(proxy);
+    };
     let http = match http_builder.build() {
         Ok(client) => client,
         Err(error) => {
