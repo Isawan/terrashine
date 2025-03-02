@@ -1,5 +1,6 @@
 use clap::{command, Parser};
 use lazy_static::lazy_static;
+use reqwest::NoProxy;
 use sqlx::postgres::PgConnectOptions;
 use std::{
     fmt::Debug,
@@ -24,6 +25,12 @@ fn parse_humantime(s: &str) -> Result<Duration, anyhow::Error> {
         Ok(v) => Ok(v.into()),
         Err(e) => Err(e.into()),
     }
+}
+
+fn parse_no_proxy(s: &str) -> Result<Option<NoProxy>, anyhow::Error> {
+    NoProxy::from_string(s)
+        .map(Some)
+        .ok_or(anyhow::anyhow!("Could not parse no_proxy"))
 }
 
 #[derive(Parser, Debug, Clone)]
@@ -105,11 +112,19 @@ pub struct ServerArgs {
     )]
     pub upstream_registry_port: u16,
 
-    /// Proxy for downloading registry
+    /// Proxy for HTTP downloading registry
     ///
-    /// The address to the proxy server. For example "socks5://127.0.0.1:9150"
-    #[arg(long, default_value = "", env = "TERRASHINE_HTTP_PROXY")]
-    pub http_proxy: String,
+    /// The address to the proxy server.
+    /// For example "http://127.0.0.1:3128"
+    #[arg(long, default_value = None, env = "HTTP_PROXY")]
+    pub http_proxy: Option<String>,
+
+    /// Exclusions to proxy
+    ///
+    /// A comma separated list of domains to exclude from the proxy.
+    /// For example "localhost,github.com"
+    #[arg(long, value_parser = parse_no_proxy, default_value = None, env = "NO_PROXY")]
+    pub no_proxy: Option<NoProxy>,
 }
 
 #[derive(clap::Args, Debug, Clone)]

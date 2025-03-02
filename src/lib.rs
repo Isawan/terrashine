@@ -155,14 +155,15 @@ pub async fn setup_server(
         http_builder = http_builder
             .add_root_certificate(Certificate::from_der(cert.as_ref()).expect("Not a certificate"));
     }
-    if !&config.http_proxy.is_empty() {
-        let proxy = match Proxy::all(&config.http_proxy) {
+    if let Some(proxy) = &config.http_proxy {
+        let proxy = match Proxy::all(proxy) {
             Ok(proxy) => proxy,
             Err(error) => {
                 error!(reason = %error, "Could not initialize proxy, exiting.");
                 return Err(());
             }
         };
+        let proxy = proxy.no_proxy(config.no_proxy.clone());
         http_builder = http_builder.proxy(proxy);
     };
     let http = match http_builder.build() {
