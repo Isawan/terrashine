@@ -67,7 +67,7 @@ futures = "0.3.30"
 humantime = "2.1.0"
 tokio-test = "0.4.4"
 tokio-util = "0.7.10"
-axum-prometheus = "0.7.0"
+axum-prometheus = "0.8.0"
 hyper-util = { version = "0.1.1", features = [
     "http1",
     "http2",
