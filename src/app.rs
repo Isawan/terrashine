@@ -72,34 +72,34 @@ pub(crate) fn provider_mirror_app<C: Clone + Send + Sync + CredentialHelper + 's
 ) -> Router {
     let metric_layer = PrometheusMetricLayerBuilder::new()
         .with_group_patterns_as(
-            "/api/v1/credentials/:hostname",
+            "/api/v1/credentials/{hostname}",
             &["/api/v1/credentials/:hostname"],
         )
         .with_group_patterns_as(
-            "/mirror/v1/:hostname/:namespace/:provider_type/index.json",
-            &["/mirror/v1/:hostname/:namespace/:provider_type/index.json"],
+            "/mirror/v1/{hostname}/{namespace}/{provider_type}/index.json",
+            &["/mirror/v1/{hostname}/{namespace}/{provider_type}/index.json"],
         )
         .with_group_patterns_as(
-            "/mirror/v1/:hostname/:namespace/:provider_type/:version",
-            &["/mirror/v1/:hostname/:namespace/:provider_type/:version"],
+            "/mirror/v1/{hostname}/{namespace}/{provider_type}/{version}",
+            &["/mirror/v1/{hostname}/{namespace}/{provider_type}/{version}"],
         )
         .with_group_patterns_as(
-            "/mirror/v1/artifacts/:version_id",
-            &["/mirror/v1/artifacts/:version_id"],
+            "/mirror/v1/artifacts/{version_id}",
+            &["/mirror/v1/artifacts/{version_id}"],
         )
         .build();
 
     let api = crate::http::api::routes(APIState::from_ref(&state));
     let mirror = Router::new()
         .route(
-            "/mirror/v1/:hostname/:namespace/:provider_type/index.json",
+            "/mirror/v1/{hostname}/{namespace}/{provider_type}/index.json",
             get(index_handler),
         )
         .route(
-            "/mirror/v1/:hostname/:namespace/:provider_type/:version",
+            "/mirror/v1/{hostname}/{namespace}/{provider_type}/{version}",
             get(version_handler),
         )
-        .route("/mirror/v1/artifacts/:version_id", get(artifacts_handler))
+        .route("/mirror/v1/artifacts/{version_id}", get(artifacts_handler))
         .route("/healthcheck", get(healthcheck_handler))
         .route(
             "/metrics",

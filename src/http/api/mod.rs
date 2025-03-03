@@ -16,7 +16,7 @@ pub(crate) fn routes<S, C: Clone + Send + Sync + 'static + CredentialHelper>(
 ) -> Router<S> {
     Router::new()
         .route(
-            "/api/v1/credentials/:hostname",
+            "/api/v1/credentials/{hostname}",
             post(update).delete(delete).get(exists),
         )
         .with_state(state)
