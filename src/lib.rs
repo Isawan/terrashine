@@ -20,6 +20,7 @@ use hyper_util::{
 };
 use migrate::run_migrate;
 use reqwest::{Certificate, Client, Proxy};
+use rustls_native_certs::CertificateResult;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::{net::SocketAddr, time::Duration};
 use tokio::{
@@ -113,14 +114,14 @@ pub async fn setup_server(
     ),
     (),
 > {
-    // Get system certificates
-    let certificates = match rustls_native_certs::load_native_certs() {
-        Ok(certificates) => certificates,
-        Err(error) => {
-            error!(reason = %error, "Could not load system certificates, exiting.");
-            return Err(());
-        }
-    };
+    let CertificateResult {
+        certs: certificates,
+        errors: cert_errors,
+        ..
+    } = rustls_native_certs::load_native_certs();
+    for error in cert_errors {
+        warn!(reason = %error, "Could not load certificate");
+    }
 
     // path style required for minio to work
     // Set up AWS SDK
