@@ -12,7 +12,7 @@ use tokio_stream::StreamExt;
 
 use super::response_types::{MirrorVersion, TargetPlatformIdentifier};
 
-pub(crate) async fn version_handler<'a, C>(
+pub(crate) async fn version_handler<C>(
     State(AppState {
         db_client: db,
         config: args,
