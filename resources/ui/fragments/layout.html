@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terrashine</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+</head>
+
+<body>
+    <div>
+        <!-- Banner -->
+        <div class="flex items-center justify-center bg-gray-800">
+            <h1 class="text-lg p-3 text-white">Terrashine</h1>
+        </div>
+        <div class="h-screen flex flex-row">
+            <!-- Menu -->
+            <div class="bg-gray-300">
+                <div class="p-2 pr-16 hover:bg-gray-800 hover:text-white">Home</div>
+                <div class="p-2 pr-16 hover:bg-gray-800 hover:text-white">Provider</div>
+                <div class="p-2 pr-16 hover:bg-gray-800 hover:text-white">Registries</div>
+            </div>
+            <!-- Content -->
+            <div class=" bg-gray-50 m-5">
+                {% block content %}<p> Placeholder</p>{% endblock %}
+            </div>
+        </div>
+</body>
+
+</html>

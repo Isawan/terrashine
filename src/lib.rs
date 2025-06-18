@@ -6,6 +6,7 @@ mod http;
 mod migrate;
 mod refresh;
 mod registry;
+mod ui;
 
 use app::AppState;
 use aws_config::BehaviorVersion;

@@ -90,6 +90,7 @@ pub(crate) fn provider_mirror_app<C: Clone + Send + Sync + CredentialHelper + 's
         .build();
 
     let api = crate::http::api::routes(APIState::from_ref(&state));
+    let ui = crate::ui::routes(state.clone());
     let mirror = Router::new()
         .route(
             "/mirror/v1/{hostname}/{namespace}/{provider_type}/index.json",
@@ -108,6 +109,7 @@ pub(crate) fn provider_mirror_app<C: Clone + Send + Sync + CredentialHelper + 's
     Router::new()
         .merge(api)
         .merge(mirror)
+        .merge(ui)
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::new().level(Level::INFO))

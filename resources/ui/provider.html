@@ -1,0 +1,27 @@
+{% extends "fragments/layout.html" %}
+
+
+{% block content %}
+<table class="w-4/5">
+    <thead class="bg-gray-400 text-left">
+        <tr>
+            <th class="p-4">ID</th>
+            <th class="p-4">Namespace</th>
+            <th class="p-4">Hostname</th>
+            <th class="p-4">Type</th>
+            <th class="p-4">Last Refreshed</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for provider in providers %}
+        <tr class="bg-sky-100">
+            <td class="border border-white p-4">{{ provider.id }}</tf>
+            <td class="border border-white p-4">{{ provider.namespace }}</td>
+            <td class="border border-white p-4">{{ provider.hostname }}</td>
+            <td class="border border-white p-4">{{ provider.type }}</td>
+            <td class="border border-white p-4">{{ provider.last_refreshed }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
