@@ -1,5 +1,7 @@
+mod docs;
 mod index;
 mod provider;
+mod staticfiles;
 
 use axum::{response::Html, routing::get, Router};
 
@@ -10,6 +12,8 @@ pub(crate) fn routes<S, C: Clone + Send + Sync + 'static + CredentialHelper>(
 ) -> Router<S> {
     Router::new()
         .route("/ui/", get(|| async { Html(IndexPage {}.to_string()) }))
-        .route("/ui/providers", get(provider::handle_provider_page::<C>))
+        .route("/ui/providers/", get(provider::handle_provider_page::<C>))
+        .route("/ui/docs/{*path}", get(docs::handle_docs))
+        .route("/ui/static/{*path}", get(staticfiles::handle_static_files))
         .with_state(state)
 }

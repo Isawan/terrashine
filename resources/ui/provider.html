@@ -1,25 +1,24 @@
 {% extends "fragments/layout.html" %}
 
-
 {% block content %}
-<table class="w-4/5">
-    <thead class="bg-gray-400 text-left">
+<table class="table-auto m-10 rounded-md overflow-hidden"> <!-- Ensures the table has proper width -->
+    <thead class="bg-gray-300 text-left">
         <tr>
-            <th class="p-4">ID</th>
-            <th class="p-4">Namespace</th>
-            <th class="p-4">Hostname</th>
-            <th class="p-4">Type</th>
-            <th class="p-4">Last Refreshed</th>
+            <th class="py-1 px-1 min-w-1/5">ID</th>
+            <th class="py-1 px-1 min-w-1/5">Namespace</th>
+            <th class="py-1 px-1 min-w-1/5">Hostname</th>
+            <th class="py-1 px-1 min-w-1/5">Type</th>
+            <th class="py-1 px-1 min-w-1/5">Last Refreshed</th>
         </tr>
     </thead>
     <tbody>
         {% for provider in providers %}
-        <tr class="bg-sky-100">
-            <td class="border border-white p-4">{{ provider.id }}</tf>
-            <td class="border border-white p-4">{{ provider.namespace }}</td>
-            <td class="border border-white p-4">{{ provider.hostname }}</td>
-            <td class="border border-white p-4">{{ provider.type }}</td>
-            <td class="border border-white p-4">{{ provider.last_refreshed }}</td>
+        <tr class="odd:bg-sky-100 even:bg-gray-100">
+            <td class="py-0.5 px-1">{{ provider.id }}</td>
+            <td class="py-0.5 px-1">{{ provider.namespace }}</td>
+            <td class="py-0.5 px-1">{{ provider.hostname }}</td>
+            <td class="py-0.5 px-1">{{ provider.type }}</td>
+            <td class="py-0.5 px-1">{{ provider.last_refreshed }}</td>
         </tr>
         {% endfor %}
     </tbody>

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terrashine</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="/ui/static/tailwind.css">
 
 </head>
 
@@ -17,16 +17,18 @@
         </div>
         <div class="h-screen flex flex-row">
             <!-- Menu -->
-            <div class="bg-gray-300">
-                <div class="p-2 pr-16 hover:bg-gray-800 hover:text-white">Home</div>
-                <div class="p-2 pr-16 hover:bg-gray-800 hover:text-white">Provider</div>
-                <div class="p-2 pr-16 hover:bg-gray-800 hover:text-white">Registries</div>
+            <div class="bg-gray-300 w-1/10">
+                <a class="block p-2 pr-16 hover:bg-gray-800 hover:text-white" href="/ui/">Home</a>
+                <a class="block p-2 pr-16 hover:bg-gray-800 hover:text-white" href="/ui/providers/">Provider</a>
+                <a class="block p-2 pr-16 hover:bg-gray-800 hover:text-white" href="/ui/registries/">Registries</a>
+                <a class="block p-2 pr-16 hover:bg-gray-800 hover:text-white" href="/ui/docs/index.html">Docs</a>
             </div>
             <!-- Content -->
-            <div class=" bg-gray-50 m-5">
+            <div class=" bg-gray-50 w-9/10">
                 {% block content %}<p> Placeholder</p>{% endblock %}
             </div>
         </div>
+    </div>
 </body>
 
 </html>
