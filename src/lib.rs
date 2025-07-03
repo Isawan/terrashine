@@ -86,8 +86,8 @@ async fn serve(listener: TcpListener, cancel: CancellationToken, app: axum::Rout
                 break;
             }
         }
-        while (join_set.join_next().await).is_some() {} // wait until all requests are done
     }
+    while (join_set.join_next().await).is_some() {} // wait until all requests are done
 }
 
 pub async fn run(
