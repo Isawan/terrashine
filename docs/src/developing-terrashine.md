@@ -9,6 +9,7 @@ Here is an end-to-end example of running terrashine for local development
 - docker
 - docker-compose plugin
 - rust
+- tailwindcss (optional, for UI development): `npm install -g @tailwindcss/cli@^4.0`
 
 2. Build and install terrashine
 ```bash

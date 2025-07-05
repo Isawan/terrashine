@@ -17,8 +17,30 @@ pub fn copy_recursively(source: impl AsRef<Path>, destination: impl AsRef<Path>)
 }
 
 pub fn generate_tailwind() -> io::Result<(String, String)> {
+    // Check if tailwindcss is available
+    let tailwind_test = Command::new("tailwindcss").arg("--help").output();
+    
+    match tailwind_test {
+        Ok(output) => {
+            let version_info = String::from_utf8_lossy(&output.stdout);
+            println!("cargo:warning=Found tailwindcss: {}", version_info.lines().next().unwrap_or("unknown"));
+        }
+        Err(_) => {
+            println!("cargo:warning=tailwindcss not found. Using pre-compiled CSS file.");
+            println!("cargo:warning=For UI development, install with: npm install -g @tailwindcss/cli@^4.0");
+            
+            // Use existing CSS when tailwindcss is not available
+            let static_css = "resources/ui/static/tailwind.css";
+            if Path::new(static_css).exists() {
+                return Ok(("tailwind.css".to_string(), static_css.to_string()));
+            }
+        }
+    }
+    
     let out_dir = std::env::var("OUT_DIR").unwrap();
     let css_path = format!("{}/tailwind.css", &out_dir);
+    
+    // Try to run tailwindcss
     let output = Command::new("tailwindcss")
         .args([
             "--input",
@@ -35,13 +57,26 @@ pub fn generate_tailwind() -> io::Result<(String, String)> {
             "Tailwind CSS generation failed: {}",
             String::from_utf8_lossy(&output.stderr)
         );
+        
+        // Fallback to pre-compiled CSS if generation fails
+        println!("cargo:warning=Falling back to pre-compiled CSS due to generation error");
+        let static_css = "resources/ui/static/tailwind.css";
+        if Path::new(static_css).exists() {
+            return Ok(("tailwind.css".to_string(), static_css.to_string()));
+        }
+        
         return Err(io::Error::new(
             io::ErrorKind::Other,
             "Tailwind CSS generation failed",
         ));
     }
 
-    // Save the generated CSS file with hash
+    // Copy the generated CSS to the static folder so it gets embedded
+    let static_css_path = "resources/ui/static/tailwind.css";
+    fs::copy(&css_path, &static_css_path)?;
+    println!("cargo:warning=Generated CSS copied to {}", static_css_path);
+
+    // Save the generated CSS file with hash (for future cache-busting implementation)
     let mut hasher = DefaultHasher::new();
     fs::read_to_string(&css_path)?.hash(&mut hasher);
     let hash = hasher.finish();
