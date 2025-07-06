@@ -17,4 +17,5 @@ FROM docker.io/library/alpine:3.22.0
 COPY --from=build /app/target/x86_64-unknown-linux-musl/release/terrashine /usr/bin/terrashine
 
 ENV RUST_LOG=info
-CMD ["terrashine", "server"]
+ENTRYPOINT ["terrashine"]
+CMD ["server"]
