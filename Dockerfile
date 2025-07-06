@@ -17,5 +17,7 @@ FROM docker.io/library/alpine:3.22.0
 COPY --from=build /app/target/x86_64-unknown-linux-musl/release/terrashine /usr/bin/terrashine
 
 ENV RUST_LOG=info
+ENV TERRASHINE_HTTP_LISTEN="[::]:9543"
+EXPOSE 9543
 ENTRYPOINT ["terrashine"]
 CMD ["server"]
