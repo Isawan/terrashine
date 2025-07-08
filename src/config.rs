@@ -39,6 +39,7 @@ fn parse_no_proxy(s: &str) -> Result<Option<NoProxy>, anyhow::Error> {
 pub enum Args {
     Server(ServerArgs),
     Migrate(MigrateArgs),
+    IsHealthy(IsHealthyArgs),
 }
 
 #[derive(clap::Args, Debug, Clone)]
@@ -136,6 +137,13 @@ pub struct MigrateArgs {
         env = "TERRASHINE_DATABASE_URL"
     )]
     pub database_url: PgConnectOptions,
+}
+
+#[derive(clap::Args, Debug, Clone)]
+pub struct IsHealthyArgs {
+    /// The host and port to bind the HTTP service
+    #[arg(long, default_value_t = *DEFAULT_SOCKET, env = "TERRASHINE_HTTP_LISTEN")]
+    pub http_listen: SocketAddr,
 }
 
 // implement test

@@ -19,5 +19,5 @@ pub(crate) struct MirrorIndex {
     pub(crate) versions: HashMap<String, HashMap<String, String>>,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct Empty;
