@@ -2,6 +2,7 @@ mod app;
 pub mod config;
 pub mod credhelper;
 mod error;
+mod healthy;
 mod http;
 mod migrate;
 mod refresh;
@@ -34,7 +35,8 @@ use tower::Service;
 use tracing::{error, warn};
 
 use crate::{
-    credhelper::database::DatabaseCredentials, refresh::refresher, registry::RegistryClient,
+    credhelper::database::DatabaseCredentials, healthy::run_healthy, refresh::refresher,
+    registry::RegistryClient,
 };
 
 #[derive(Debug)]
@@ -99,6 +101,7 @@ pub async fn run(
     match config {
         Args::Server(args) => run_server(args, metric_handle, cancel, startup).await,
         Args::Migrate(args) => run_migrate(args).await,
+        Args::IsHealthy(args) => run_healthy(args).await,
     }
 }
 
