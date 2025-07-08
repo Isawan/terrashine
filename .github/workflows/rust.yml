@@ -114,7 +114,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Ensure musl installed
-        run: sudo apt-get install -y musl-dev musl-tools musl && rustup target add x86_64-unknown-linux-musl
+        run: sudo apt-get install -y musl-dev musl-tools musl && rustup target add x86_64-unknown-linux-musl && cargo install cross
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       - name: Build final release binary
         run: ./scripts/release

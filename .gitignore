@@ -18,3 +18,4 @@ lcov.*.info
 .vscode
 
 **/.terraform/
+terrashine-*.tar.gz
