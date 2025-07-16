@@ -8,5 +8,5 @@ title = "terrashine"
 [output.html]
 git-repository-url = "https://github.com/Isawan/terrashine"
 edit-url-template = "https://github.com/Isawan/terrashine/edit/main/docs/{path}"
-site-url = "terrrashine/"
 hash-files = true
+site-url = "/terrrashine/"
