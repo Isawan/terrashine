@@ -9,4 +9,4 @@ title = "terrashine"
 git-repository-url = "https://github.com/Isawan/terrashine"
 edit-url-template = "https://github.com/Isawan/terrashine/edit/main/docs/{path}"
 hash-files = true
-site-url = "/terrrashine/"
+site-url = "/terrashine/"
