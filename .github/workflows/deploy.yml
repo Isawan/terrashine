@@ -26,7 +26,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           draft: true
-          name: Test-release
           files: |
             terrashine-x86_64-unknown-linux-musl.tar.gz
             terrashine-aarch64-unknown-linux-musl.tar.gz
