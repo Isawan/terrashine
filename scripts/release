@@ -1,3 +1,10 @@
 #!/bin/sh
+set -e
 
-SQLX_OFFLINE=1 cargo build --release --verbose
+SQLX_OFFLINE=1 cross build --target x86_64-unknown-linux-musl --release --verbose
+tar -czf terrashine-x86_64-unknown-linux-musl.tar.gz  -C target/x86_64-unknown-linux-musl/release/  terrashine
+
+cross clean
+
+SQLX_OFFLINE=1 cross build --target aarch64-unknown-linux-musl --release --verbose
+tar -czf terrashine-aarch64-unknown-linux-musl.tar.gz -C target/aarch64-unknown-linux-musl/release/ terrashine
