@@ -22,45 +22,42 @@ Here is an example NGINX configuration that provides TLS termination and caching
 for a locally deployed terrashine instance.
 
 ``` nginx
-user  nginx;
-worker_processes  auto;
-
-error_log  /dev/stdout notice;
-pid        /var/run/nginx.pid;
+user             nginx;
+worker_processes auto;
+error_log        /dev/stdout notice;
+pid              /var/run/nginx.pid;
 
 events {
     worker_connections  1024;
 }
 
 http {
-    default_type  application/octet-stream;
+    default_type       application/octet-stream;
 
-    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
-                      '$status $body_bytes_sent "$http_referer" '
-                      '"$http_user_agent" "$http_x_forwarded_for"';
-    access_log  /dev/stdout  main;
-    sendfile        on;
+    log_format         main  '$remote_addr - $remote_user [$time_local] "$request" '
+                             '$status $body_bytes_sent "$http_referer" '
+                             '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log         /dev/stdout  main;
+    sendfile           on;
     keepalive_timeout  65;
-    proxy_cache_path /tmp keys_zone=mycache:10m;
-
 
     server {
-        listen              443 ssl;
+        listen              9443 ssl;
         server_name         localhost;
-        proxy_cache         mycache;
         ssl_certificate     localhost.pem;
         ssl_certificate_key localhost.pem;
-        ssl_protocols       TLSv1 TLSv1.1 TLSv1.2;
+        ssl_protocols       TLSv1.2 TLSv1.3;
         ssl_ciphers         HIGH:!aNULL:!MD5;
         location / {
             # terrashine
             proxy_pass http://localhost:9543;
         }
-        # Deny traffic to the API endpoint
-        # This could be protected by basic auth as well
+        # Deny traffic to the API endpoints
+        # This could be protected by basic auth as well.
         location /api {
-            deny all;
-            return 404;
+            deny   all;
+            return 403;
         }
     }
 }

@@ -1,3 +1,5 @@
+use std::process::exit;
+
 use axum_prometheus::{
     metrics_exporter_prometheus::{Matcher, PrometheusBuilder},
     AXUM_HTTP_REQUESTS_DURATION_SECONDS,
@@ -13,7 +15,7 @@ use tracing_subscriber::EnvFilter;
 static GLOBAL: Jemalloc = Jemalloc;
 
 #[tokio::main]
-async fn main() -> Result<(), ()> {
+async fn main() {
     let args = Args::parse();
 
     tracing_subscriber::fmt()
@@ -54,5 +56,9 @@ async fn main() -> Result<(), ()> {
 
     let result = handle.await.unwrap();
     tracing::info!("Server shutdown");
-    result
+
+    match result {
+        Ok(_) => exit(0),
+        Err(_) => exit(1),
+    }
 }

@@ -91,20 +91,22 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       - name: Setup LCOV
         uses: hrishikesh-kadam/setup-lcov@f5da1b26b0dcf5d893077a3c4f29cf78079c841d # v1
-      - uses: actions/download-artifact@master
+      - uses: actions/download-artifact@v4
         with:
           name: lcov.integration-tests.info
           path: lcov
-      - uses: actions/download-artifact@master
+      - uses: actions/download-artifact@v4
         with:
           name: lcov.unit-tests.info
           path: lcov
+      - name: Check folder
+        run: ls -lF
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5
         if: steps.changes.outputs.src == 'true'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: lcov.unit-tests.info,lcov.integration-tests.info
+          files: lcov/lcov.unit-tests.info,lcov/lcov.integration-tests.info
           fail_ci_if_error: true
 
 
@@ -114,7 +116,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Ensure musl installed
-        run: sudo apt-get install -y musl-dev musl-tools musl && rustup target add x86_64-unknown-linux-musl
+        run: sudo apt-get install -y musl-dev musl-tools musl && rustup target add x86_64-unknown-linux-musl && cargo install cross
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       - name: Build final release binary
         run: ./scripts/release
