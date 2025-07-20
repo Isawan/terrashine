@@ -108,21 +108,3 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: lcov/lcov.unit-tests.info,lcov/lcov.integration-tests.info
           fail_ci_if_error: true
-
-
-
-  build-release:
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Ensure musl installed
-        run: sudo apt-get install -y musl-dev musl-tools musl && rustup target add x86_64-unknown-linux-musl && cargo install cross
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-      - name: Build final release binary
-        run: ./scripts/release
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4
-        with:
-          name: terrashine-binary
-          path: target/x86_64-unknown-linux-musl/release/terrashine
