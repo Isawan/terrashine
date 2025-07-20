@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
       - name: Build final release binary
-        run: ./scripts/release
+        run: ./scripts/release ${{ github.ref }}
 
       - name: Release files
         uses: softprops/action-gh-release@v2
