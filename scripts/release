@@ -28,4 +28,4 @@ cross clean
 SQLX_OFFLINE=1 cross build --target aarch64-unknown-linux-musl --release --verbose
 tar -czf terrashine-aarch64-unknown-linux-musl.tar.gz -C target/aarch64-unknown-linux-musl/release/ terrashine
 $DOCKER_BIN build --manifest ghcr.io/isawan/terrashine:${VERSION} --platform=linux/arm64 --build-arg HOST_BIN_PATH=target/aarch64-unknown-linux-musl/release/terrashine -f Dockerfile.release
-$DOCKER_BIN podman manifest push --all ghcr.io/isawan/terrashine:${VERSION} ghcr.io/isawan/terrashine:${VERSION}
+$DOCKER_BIN manifest push --all ghcr.io/isawan/terrashine:${VERSION} ghcr.io/isawan/terrashine:${VERSION}
