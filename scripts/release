@@ -1,10 +1,31 @@
 #!/bin/sh
 set -e
 
+# SET DOCKER_BIN based on if podman or docker exists
+if command -v podman >/dev/null 2>&1; then
+    DOCKER_BIN=podman
+else
+    DOCKER_BIN=docker
+fi
+
+# Parse argument name with error if not provided
+if [ -z "$1" ]; then
+    echo "Usage: $0 <release_name>"
+    exit 1
+fi
+RELEASE_NAME=$1
+# RELEASE_NAME has form like v0.1.0
+VERSION=$(echo $RELEASE_NAME | sed 's/^v//')
+
+$DOCKER_BIN manifest create ghcr.io/isawan/terrashine:${VERSION}
+
 SQLX_OFFLINE=1 cross build --target x86_64-unknown-linux-musl --release --verbose
 tar -czf terrashine-x86_64-unknown-linux-musl.tar.gz  -C target/x86_64-unknown-linux-musl/release/  terrashine
+$DOCKER_BIN build --manifest ghcr.io/isawan/terrashine:${VERSION} --platform=linux/amd64 --build-arg HOST_BIN_PATH=target/x86_64-unknown-linux-musl/release/terrashine -f Dockerfile.release
 
 cross clean
 
 SQLX_OFFLINE=1 cross build --target aarch64-unknown-linux-musl --release --verbose
 tar -czf terrashine-aarch64-unknown-linux-musl.tar.gz -C target/aarch64-unknown-linux-musl/release/ terrashine
+$DOCKER_BIN build --manifest ghcr.io/isawan/terrashine:${VERSION} --platform=linux/arm64 --build-arg HOST_BIN_PATH=target/aarch64-unknown-linux-musl/release/terrashine -f Dockerfile.release
+$DOCKER_BIN podman manifest push --all ghcr.io/isawan/terrashine:${VERSION} ghcr.io/isawan/terrashine:${VERSION}
