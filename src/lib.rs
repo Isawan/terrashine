@@ -105,7 +105,6 @@ pub async fn run(
     }
 }
 
-// refactoring setup code in run_server
 pub async fn setup_server(
     config: &ServerArgs,
 ) -> Result<
@@ -224,47 +223,5 @@ pub async fn run_server(
 
     join!(server, refresher);
     tracing::debug!("Shutting down server");
-    Ok(())
-}
-
-pub async fn run_lambda(
-    config: ServerArgs,
-    cancel: CancellationToken,
-    startup: Sender<StartUpNotify<()>>,
-) -> Result<(), ()> {
-    let (http, db, s3, credentials) = setup_server(&config).await.unwrap();
-
-    let (tx, rx) = mpsc::channel(10000);
-
-    let refresher_db = db.clone();
-    let refresher_registry = RegistryClient::new(
-        config.upstream_registry_port,
-        http.clone(),
-        credentials.clone(),
-    );
-    let refresher = refresher(
-        &refresher_db,
-        &refresher_registry,
-        rx,
-        config.refresh_interval,
-        cancel.child_token(),
-    );
-
-    let app = app::provider_mirror_app(
-        AppState::new(config.clone(), s3, db, http, tx, credentials.clone()),
-        None,
-    );
-
-    let server = lambda_http::run(app);
-
-    startup
-        .send(StartUpNotify { msg: () })
-        .expect("Sender channel has already been used");
-
-    select! {
-        _ = server => tracing::trace!("Lambda runtime exited"),
-        _ = refresher => tracing::trace!("Refresher exited"),
-        _ = cancel.cancelled() => tracing::trace!("Cancellation requested"),
-    }
     Ok(())
 }
