@@ -2,7 +2,7 @@ mod app;
 pub mod config;
 pub mod credhelper;
 mod error;
-mod healthy;
+pub mod healthy;
 mod http;
 mod migrate;
 mod refresh;

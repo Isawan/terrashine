@@ -3,7 +3,7 @@ use tracing::error;
 use crate::config::IsHealthyArgs;
 use std::convert::Into;
 
-pub(crate) async fn run_healthy(args: IsHealthyArgs) -> Result<(), ()> {
+pub async fn run_healthy(args: IsHealthyArgs) -> Result<(), ()> {
     let result = reqwest::get(format!("http://{}/healthcheck", args.http_listen))
         .await
         .map_err(Into::<anyhow::Error>::into)
