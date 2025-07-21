@@ -81,6 +81,9 @@ jobs:
       pull-requests: write
     needs: [unit-tests, integration-tests]
     steps:
+
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+
       - uses: dorny/paths-filter@v3
         id: changes
         with:
@@ -88,7 +91,6 @@ jobs:
             src:
               - 'src/**'
 
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       - name: Setup LCOV
         uses: hrishikesh-kadam/setup-lcov@f5da1b26b0dcf5d893077a3c4f29cf78079c841d # v1
       - uses: actions/download-artifact@v4
