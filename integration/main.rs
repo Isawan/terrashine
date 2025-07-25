@@ -12,8 +12,12 @@ use std::{
 use crate::util::copy_dir;
 use reqwest::StatusCode;
 use sqlx::{pool::PoolOptions, postgres::PgConnectOptions, Postgres};
-use terrashine::{self, config::ServerArgs};
+use terrashine::{
+    self,
+    config::{IsHealthyArgs, ServerArgs},
+};
 use tokio::select;
+use tower_http::trace;
 use tracing_test::traced_test;
 use url::Url;
 use uuid::Uuid;
@@ -125,5 +129,43 @@ fn test_end_to_end_terraform_flow(_: PoolOptions<Postgres>, db_options: PgConnec
     }
 
     cancellation_token.cancel();
+    handle.abort();
+}
+
+/// Set up a terrashine and use the client to test the health check endpoint
+#[traced_test]
+#[sqlx::test]
+fn test_health_check_functionality(_: PoolOptions<Postgres>, db_options: PgConnectOptions) {
+    let prefix = format!("{}/", Uuid::new_v4());
+    let config = ServerArgs {
+        database_url: db_options,
+        database_pool: 3,
+        s3_bucket_name: "terrashine".to_string(),
+        s3_bucket_prefix: prefix,
+        s3_endpoint: Some(Url::parse("http://localhost:9000").unwrap()),
+        http_redirect_url: Url::parse("https://localhost:9445/mirror/v1/").unwrap(),
+        http_listen: SocketAddr::new(IpAddr::V6(Ipv6Addr::LOCALHOST), 9545),
+        refresh_interval: Duration::from_secs(10),
+        upstream_registry_port: 443,
+        http_proxy: None,
+        no_proxy: None,
+    };
+    let cancellation_token = tokio_util::sync::CancellationToken::new();
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    let handle = tokio::spawn(terrashine::run_server(
+        config,
+        None,
+        cancellation_token.child_token(),
+        tx,
+    ));
+    let _ = rx.await.unwrap().msg;
+
+    terrashine::healthy::run_healthy(IsHealthyArgs {
+        http_listen: SocketAddr::new(IpAddr::V6(Ipv6Addr::LOCALHOST), 9545),
+    })
+    .await
+    .expect("Health check failed");
+
+    // run is_healthy
     handle.abort();
 }
