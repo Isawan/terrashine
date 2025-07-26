@@ -1,0 +1,5 @@
+auth:
+  rootUser: minioadmin
+  rootPassword: minioadmin
+
+defaultBuckets: terrashine
