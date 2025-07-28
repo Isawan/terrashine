@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: terrashine
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: terrashine
+  template:
+    metadata:
+      labels:
+        app: terrashine
+    spec:
+      containers:
+        - name: terrashine
+          image: "{name}"
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 9543
+          env:
+            - name: "TERRASHINE_HTTP_REDIRECT_URL"
+              value: "http://localhost:9443/mirror/v1/"
+            - name: "TERRASHINE_S3_BUCKET_NAME"
+              value: "terrashine"
+            - name: "AWS_ACCESS_KEY_ID"
+              value: "minioadmin"
+            - name: "AWS_SECRET_ACCESS_KEY"
+              value: "minioadmin"
+            - name: "TERRASHINE_DATABASE_URL"
+              value: "postgresql://postgres:postgres@postgres-postgresql:5432/postgres"

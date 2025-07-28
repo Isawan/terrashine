@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+from encodings import uu_codec
+from subprocess import Popen, run, PIPE
+from uuid import uuid4
+from pathlib import Path
+from time import sleep
+import sys
+import os
+import uuid
+
+run(["cargo", "build" ] + sys.argv[1:],check=True)
+
+if "--release" in sys.argv:
+    bin_path = "target/x86_64-unknown-linux-musl/release/terrashine"
+else:
+    bin_path = "target/x86_64-unknown-linux-musl/debug/terrashine"
+
+u = uuid4()
+name = f"localhost/terrashine:dev-{u}"
+run(["podman", "build", "--build-arg", f"HOST_BIN_PATH={bin_path}","-t", name, "-f", "Dockerfile.release", "--quiet"], check=True, stdout=PIPE, stderr=PIPE)
+# Save and load into minikube in a pipe
+
+p = os.pipe()
+podman_save = Popen(["podman", "save", name], stdout=p[1])
+minikube_load = Popen(["minikube", "image", "load", "-"], stdin=p[0], stdout=PIPE, stderr=PIPE)
+os.close(p[1])
+os.close(p[0])
+
+minikube_load.wait()
+if minikube_load.returncode != 0:
+    print("Error loading minikube image:", file=sys.stderr)
+    sys.exit(minikube_load.returncode)
+podman_save.wait()
+if podman_save.returncode != 0:
+    print("Error saving podman image:", file=sys.stderr)
+    sys.exit(podman_save.returncode)
+
+manifest = Path("k8s/manifests/terrashine.yml").read_text()
+manifest = manifest.replace("{name}", name)
+run(["kubectl", "apply", "-f", "-" ], input=manifest.encode("utf-8"), check=True)
+
+# apply helm
+run(["helmfile", "apply", "-f", "k8s/helm/helmfile.yml"], check=True)

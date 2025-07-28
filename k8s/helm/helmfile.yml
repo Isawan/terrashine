@@ -8,10 +8,8 @@ releases:
     version: "16.7.21"
     values:
       - values/postgres.yml
-  - name: minio
-    chart: bitnami/minio
-    version: "17.0.16"
-    values:
-      - values/minio.yml
-  - name: nginx
-
+#  - name: minio
+#    chart: bitnami/minio
+#    version: "17.0.16"
+#    values:
+#      - values/minio.yml
