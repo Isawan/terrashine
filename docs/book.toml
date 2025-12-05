@@ -1,7 +1,6 @@
 [book]
 authors = ["Isawan Millican"]
 language = "en"
-multilingual = false
 src = "src"
 title = "terrashine"
 
