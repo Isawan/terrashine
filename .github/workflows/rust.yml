@@ -17,7 +17,7 @@ jobs:
       - name: Ensure musl installed
         run: sudo apt-get install -y musl-dev musl-tools musl && rustup target add x86_64-unknown-linux-musl
 
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
       - uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # v2
 
       - name: Install cargo-llvm-cov
@@ -27,7 +27,7 @@ jobs:
         run: cargo llvm-cov test --verbose --lib --lcov --output-path lcov.unit-tests.info
 
       - name: Upload artifact
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: lcov.unit-tests.info
           path: lcov.unit-tests.info
@@ -44,7 +44,7 @@ jobs:
           echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
           sudo apt update && sudo apt install terraform
 
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
       - uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # v2
 
       - name: Install cargo-llvm-cov
@@ -70,7 +70,7 @@ jobs:
         run: docker compose down
 
       - name: Upload artifact
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: lcov.integration-tests.info
           path: lcov.integration-tests.info
@@ -82,7 +82,7 @@ jobs:
     needs: [unit-tests, integration-tests]
     steps:
 
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
       - uses: dorny/paths-filter@v3
         id: changes
@@ -93,11 +93,11 @@ jobs:
 
       - name: Setup LCOV
         uses: hrishikesh-kadam/setup-lcov@f5da1b26b0dcf5d893077a3c4f29cf78079c841d # v1
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: lcov.integration-tests.info
           path: lcov
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: lcov.unit-tests.info
           path: lcov
