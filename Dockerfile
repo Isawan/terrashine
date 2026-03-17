@@ -1,4 +1,4 @@
-FROM docker.io/library/rust:1.88@sha256:5771a3cc2081935c59ac52b92d49c9e164d4fed92c9f6420aa8cc50364aead6e AS build
+FROM docker.io/library/rust:1.94@sha256:72724f1a416c449b405a2b7ed6bac56058163e6dfb1b5ccb40839882141dd237 AS build
 
 WORKDIR /app
 
