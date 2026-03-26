@@ -18,7 +18,7 @@ jobs:
       - name: Ensure musl installed
         run: sudo apt-get install -y musl-dev musl-tools musl && rustup target add x86_64-unknown-linux-musl aarch64-unknown-linux-musl && cargo install cross
 
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
 
       # Add Docker login step
@@ -34,7 +34,7 @@ jobs:
         run: ./scripts/release ${{ github.ref_name }}
 
       - name: Release files
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2
         with:
           draft: true
           files: |
