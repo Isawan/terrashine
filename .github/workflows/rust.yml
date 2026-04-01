@@ -21,7 +21,7 @@ jobs:
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
 
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@c92986c260e4cef66c5a0ca770af92552fa8049a # cargo-llvm-cov
+        uses: taiki-e/install-action@d53b5a5c0319bc1cbce5e66cdab7863b510a5991 # cargo-llvm-cov
 
       - name: Run unit tests
         run: cargo llvm-cov test --verbose --lib --lcov --output-path lcov.unit-tests.info
@@ -48,7 +48,7 @@ jobs:
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
 
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@c92986c260e4cef66c5a0ca770af92552fa8049a # cargo-llvm-cov
+        uses: taiki-e/install-action@d53b5a5c0319bc1cbce5e66cdab7863b510a5991 # cargo-llvm-cov
 
       - name: Start containers
         run: docker compose up -d
