@@ -12,7 +12,7 @@ RUN cargo fetch
 COPY . .
 RUN SQLX_OFFLINE=1 cargo build --release
 
-FROM docker.io/library/alpine:3.22.1@sha256:4bcff63911fcb4448bd4fdacec207030997caf25e9bea4045fa6c8c44de311d1
+FROM docker.io/library/alpine:3.23.4@sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f096bc91145e68878dd4a5019afde11
 
 COPY --from=build /app/target/x86_64-unknown-linux-musl/release/terrashine /usr/bin/terrashine
 
