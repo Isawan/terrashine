@@ -18,12 +18,12 @@ jobs:
       - name: Ensure musl installed
         run: sudo apt-get install -y musl-dev musl-tools musl && rustup target add x86_64-unknown-linux-musl aarch64-unknown-linux-musl && cargo install cross
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
 
       # Add Docker login step
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -34,7 +34,7 @@ jobs:
         run: ./scripts/release ${{ github.ref_name }}
 
       - name: Release files
-        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           draft: true
           files: |

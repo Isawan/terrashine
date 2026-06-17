@@ -17,17 +17,17 @@ jobs:
       - name: Ensure musl installed
         run: sudo apt-get install -y musl-dev musl-tools musl && rustup target add x86_64-unknown-linux-musl
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
 
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@39b03b784b1fb8d2e38e4d6dcf888b991e3c5898 # cargo-llvm-cov
+        uses: taiki-e/install-action@528e28158500e8adf409c61ac0eaa6bdd47f49ca # cargo-llvm-cov
 
       - name: Run unit tests
         run: cargo llvm-cov test --verbose --lib --lcov --output-path lcov.unit-tests.info
 
       - name: Upload artifact
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: lcov.unit-tests.info
           path: lcov.unit-tests.info
@@ -44,11 +44,11 @@ jobs:
           echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
           sudo apt update && sudo apt install terraform
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
 
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@39b03b784b1fb8d2e38e4d6dcf888b991e3c5898 # cargo-llvm-cov
+        uses: taiki-e/install-action@528e28158500e8adf409c61ac0eaa6bdd47f49ca # cargo-llvm-cov
 
       - name: Start containers
         run: docker compose up -d
@@ -70,7 +70,7 @@ jobs:
         run: docker compose down
 
       - name: Upload artifact
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: lcov.integration-tests.info
           path: lcov.integration-tests.info
@@ -82,7 +82,7 @@ jobs:
     needs: [unit-tests, integration-tests]
     steps:
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
         id: changes
@@ -104,7 +104,7 @@ jobs:
       - name: Check folder
         run: ls -lF
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v6
         if: steps.changes.outputs.src == 'true'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
