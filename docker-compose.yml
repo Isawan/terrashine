@@ -2,7 +2,7 @@ version: "3.9"
 services:
 
   postgres:
-    image: docker.io/library/postgres:18-alpine@sha256:1b1689b20d16a014a3d195653381cf2caa75a41a92d93b255a9d6ea29fd353aa
+    image: docker.io/library/postgres:18-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15
     network_mode: host
     # ports:
     #   - "5432:5432"
@@ -26,7 +26,7 @@ services:
   aws-cli:
     depends_on:
       - minio
-    image: docker.io/amazon/aws-cli@sha256:749bfaf91d690b9a1768083822d620f96c19defdf9ca2dc227eb3695281fda5b
+    image: docker.io/amazon/aws-cli@sha256:f7e6c7fb03510fd1f4e27469458ca372a37c823a8c32860e0dd2f04a41787794
     entrypoint: aws
     network_mode: host
     command:
@@ -44,7 +44,7 @@ services:
       AWS_DEFAULT_REGION: us-east-1
 
   generate-certificates:
-    image: docker.io/alpine/openssl@sha256:2d22deb0a688c5a22cbc71d5aadc52b238fd2eb9e3ba5c1ebc2bfb506adecfc6
+    image: docker.io/alpine/openssl@sha256:1b0d3af4259074abbe0a7db8480f27b31856dfe38a529e9c6b13d1604e2654ea
     entrypoint: /mnt/scripts/generate-test-certificate
     working_dir: /mnt/
     volumes:
@@ -56,7 +56,7 @@ services:
         type: bind
 
   nginx:
-    image: docker.io/library/nginx@sha256:ec4ed8b5299e5e90694af7750eb6dffd2627317d30544d056b0371f8082f7bce
+    image: docker.io/library/nginx@sha256:fa25dc4482506b0786a17a167b25348e6ca303ae0213404416db35441c75af29
     network_mode: host
     volumes:
       - ./resources/test/nginx:/etc/nginx:ro
