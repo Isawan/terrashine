@@ -1,66 +1,68 @@
 {
-    "extends": [
-        "config:best-practices",
+    extends: [
+        'config:best-practices',
     ],
-    "packageRules": [
+    packageRules: [
         {
-            "matchPackagePrefixes": [
-                "tokio",
+            groupName: 'tokio-packages',
+            matchPackageNames: [
+                'tokio{/,}**',
             ],
-            "groupName": "tokio-packages",
         },
         {
-            "matchSourceUrlPrefixes": [
-                "https://github.com/serde-rs/",
+            groupName: 'serde',
+            automerge: true,
+            matchSourceUrls: [
+                'https://github.com/serde-rs/{/,}**',
             ],
-            "groupName": "serde",
-            "automerge": true,
         },
         {
-            "matchSourceUrls": [
-                "https://github.com/tokio-rs/axum",
+            matchSourceUrls: [
+                'https://github.com/tokio-rs/axum',
             ],
-            "matchUpdateTypes": [
-                "patch",
+            matchUpdateTypes: [
+                'patch',
             ],
-            "groupName": "axum",
-            "automerge": true,
+            groupName: 'axum',
+            automerge: true,
         },
         {
-            "matchSourceUrls": [
-                "https://github.com/tower-rs/tower-http",
+            matchSourceUrls: [
+                'https://github.com/tower-rs/tower-http',
             ],
-            "matchUpdateTypes": [
-	            "patch",
+            matchUpdateTypes: [
+                'patch',
             ],
-            "groupName": "tower",
-            "automerge": true,
+            groupName: 'tower',
+            automerge: true,
         },
         {
-            "matchPackageNames": [
-                "url",
-                "clap",
-                "tempfile",
-                "futures",
-                "anyhow",
-                "async-trait",
-                "reqwest",
-                "thiserror",
-		"http",
+            matchPackageNames: [
+                'url',
+                'clap',
+                'tempfile',
+                'futures',
+                'anyhow',
+                'async-trait',
+                'reqwest',
+                'thiserror',
+                'http',
             ],
-            "automerge": true,
+            automerge: true,
         },
         {
-            "extends": ["monorepo:aws-sdk-rust"],
-            "automerge": true,
+            extends: [
+                'monorepo:aws-sdk-rust',
+            ],
+            automerge: true,
         },
         {
-            "matchManagers": [
-                "docker-compose",
-                "github-actions",
+            matchManagers: [
+                'docker-compose',
+                'github-actions',
             ],
-            "groupName": "ci environment",
-            "automerge": true,
+            groupName: 'ci environment',
+            automerge: true,
         },
-    ]
+    ],
 }
