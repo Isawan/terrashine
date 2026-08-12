@@ -18,10 +18,10 @@ jobs:
         run: sudo apt-get install -y musl-dev musl-tools musl && rustup target add x86_64-unknown-linux-musl
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
 
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@ea361d59ff285fa3ab7cc40dcba421e91017d586 # cargo-llvm-cov
+        uses: taiki-e/install-action@60c08ce81d769135aafd96f96efc85993d9cb8e4 # cargo-llvm-cov
 
       - name: Run unit tests
         run: cargo llvm-cov test --verbose --lib --lcov --output-path lcov.unit-tests.info
@@ -45,10 +45,10 @@ jobs:
           sudo apt update && sudo apt install terraform
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
 
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@ea361d59ff285fa3ab7cc40dcba421e91017d586 # cargo-llvm-cov
+        uses: taiki-e/install-action@60c08ce81d769135aafd96f96efc85993d9cb8e4 # cargo-llvm-cov
 
       - name: Start containers
         run: docker compose up -d
@@ -84,7 +84,7 @@ jobs:
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4
         id: changes
         with:
           filters: |
