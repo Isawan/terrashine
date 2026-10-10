@@ -21,13 +21,13 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
 
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@212e92b595ceefa6daaad2cda95b921ed5da4cd4 # cargo-llvm-cov
+        uses: taiki-e/install-action@be76f545a6a2f94fb131c5bb748ebed32edb5760 # cargo-llvm-cov
 
       - name: Run unit tests
         run: cargo llvm-cov test --verbose --lib --lcov --output-path lcov.unit-tests.info
 
       - name: Upload artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: lcov.unit-tests.info
           path: lcov.unit-tests.info
@@ -48,7 +48,7 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
 
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@212e92b595ceefa6daaad2cda95b921ed5da4cd4 # cargo-llvm-cov
+        uses: taiki-e/install-action@be76f545a6a2f94fb131c5bb748ebed32edb5760 # cargo-llvm-cov
 
       - name: Start containers
         run: docker compose up -d
@@ -70,7 +70,7 @@ jobs:
         run: docker compose down
 
       - name: Upload artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: lcov.integration-tests.info
           path: lcov.integration-tests.info
@@ -93,18 +93,18 @@ jobs:
 
       - name: Setup LCOV
         uses: hrishikesh-kadam/setup-lcov@6c1aa0cc9e1c02f9f58f01ac599f1064ccc83470 # v1
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: lcov.integration-tests.info
           path: lcov
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: lcov.unit-tests.info
           path: lcov
       - name: Check folder
         run: ls -lF
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7
         if: steps.changes.outputs.src == 'true'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
